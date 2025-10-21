@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Perception/AIPerceptionStimuliSourceComponent.h" //AI가 타겟을 지정할수 있도록 추가
 #include "TP_ThirdPersonCharacter.generated.h"
 
 class USpringArmComponent;
@@ -55,6 +56,11 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	virtual void BeginPlay() override;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="AI") //AI가 타겟이 지정되도록 하는 기능
+	UAIPerceptionStimuliSourceComponent* StimuliSource;
 			
 
 protected:
