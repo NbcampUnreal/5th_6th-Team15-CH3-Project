@@ -11,8 +11,11 @@ ABase_item::ABase_item()
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	Collision->SetupAttachment(Scene);
 
-	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
-	StaticMesh->SetupAttachment(Collision);
+	CastingTimeOut = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CastingTimeOut"));
+	CastingTimeOut->SetupAttachment(Collision);
+
+	CastingTimeIn = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CastingTimeIn"));
+	CastingTimeIn->SetupAttachment(Collision);
 }
 
 void ABase_item::OnItemOverlap(AActor* OverlapActor)
