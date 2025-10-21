@@ -6,11 +6,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-//#include "Input/InputAction.h"
+#include "InputAction.h"       // 1 없어도됨
 
-
-//#include "AutoAttackComponent.h" 
-
+// #include "AutoAttackComponent.h" 
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
