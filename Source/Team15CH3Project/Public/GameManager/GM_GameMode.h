@@ -6,7 +6,9 @@
 #include "GameFramework/GameMode.h"
 #include "GM_GameMode.generated.h"
 
-
+/**
+ * 
+ */
 UCLASS()
 class TEAM15CH3PROJECT_API AGM_GameMode : public AGameMode
 {
@@ -18,7 +20,7 @@ public:
 protected:
     virtual void BeginPlay() override;
 
-public:
+private:
     //미션 타이머
     FTimerHandle MissionTimerHandle;
 
@@ -28,6 +30,7 @@ public:
     //미션 생성 시간
     float MissionSpawnDelay;
 
+public:
     //게임 시작
     UFUNCTION(BlueprintCallable, Category = "Game Flow")
     void StartGame();

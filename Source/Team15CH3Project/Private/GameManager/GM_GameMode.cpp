@@ -5,18 +5,11 @@
 #include "GameManager/GS_GameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
-#include "GameFramework/PlayerStart.h"
-// #include "PlayerMade/Controller/PlayerMadeController.h"
-// #include "PlayerMade/PlayerCharacter.h"
 
 AGM_GameMode::AGM_GameMode()
 {
     // Tick 활성화 
     PrimaryActorTick.bCanEverTick = true;
-
-    /* 캐릭터와 플레이어 컨트롤 연동
-    DefaultPawnClass = PlayerCharacter::StaticClass();
-    PlayerControllerClass = PlayerMadeController::StaticClass(); */
 
     // 기본값 
     bIsGameOver = false;
@@ -63,44 +56,8 @@ void AGM_GameMode::StartGame()
 
 void AGM_GameMode::ResetGame()
 {
-    // 현재 월드 
-    UWorld* World = GetWorld();
-    if (!World) return;
-
-    // 플레이어 컨트롤러 
-    APlayerController* PC = World->GetFirstPlayerController();
-    if (!PC) return;
-
-    // 플레이어 캐릭터 
-    APawn* PlayerPawn = PC->GetPawn();
-    if (PlayerPawn)
-    {
-        // 기존 캐릭터 제거
-        PlayerPawn->Destroy();
-    }
-
-    // 플레이어 스폰 위치 
-    TArray<AActor*> PlayerStarts;
-    UGameplayStatics::GetAllActorsOfClass(World, APlayerStart::StaticClass(), PlayerStarts);
-
-    if (PlayerStarts.Num() > 0)
-    {
-        // 첫 번째 PlayerStart 위치 
-        FVector SpawnLocation = PlayerStarts[0]->GetActorLocation();
-        FRotator SpawnRotation = PlayerStarts[0]->GetActorRotation();
-
-        // 캐릭터 스폰
-        APawn* NewPawn = World->SpawnActor<APawn>(DefaultPawnClass, SpawnLocation, SpawnRotation);
-        if (NewPawn)
-        {
-            // 플레이어 컨트롤러에 소유권 설정
-            PC->Possess(NewPawn);
-        }
-    }
+    //플레이어 컨트롤 생성 후 로직 작성하기
 }
-
-
-
 
 
 void AGM_GameMode::StartNextWave()
