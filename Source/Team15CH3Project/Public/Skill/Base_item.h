@@ -28,8 +28,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item|Component")
 	UStaticMeshComponent* CastingTimeIn;
 
-	virtual void OnItemOverlap(AActor* OverlapActor) override;
-	virtual void OnItemEndOverlap(AActor* OverlapActor)override;
 	virtual void ActivateItem(AActor* Acivator)override;
 	virtual FName GetIemType() const override;
 

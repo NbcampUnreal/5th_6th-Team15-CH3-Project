@@ -18,14 +18,7 @@ ABase_item::ABase_item()
 	CastingTimeIn->SetupAttachment(Collision);
 }
 
-void ABase_item::OnItemOverlap(AActor* OverlapActor)
-{
 
-}
-void ABase_item::OnItemEndOverlap(AActor* OverlapActor)
-{
-
-}
 void ABase_item::ActivateItem(AActor* Acivator)
 {
 
