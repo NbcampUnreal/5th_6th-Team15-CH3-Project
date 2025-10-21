@@ -10,6 +10,8 @@
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
 				"Engine",
+				"CommonUI",
+				"DeveloperSettings"
 				"AIModule"
 				"CoreUObject"
 			]
@@ -22,6 +24,10 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
 		}
 	]
 }
