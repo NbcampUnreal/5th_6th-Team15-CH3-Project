@@ -34,6 +34,7 @@ public:
     UPROPERTY(BlueprintReadWrite, Replicated, Category = "Player Stats")
     int32 EnemyKillCount;
 
+private:
     // 플레이어 체력 감소
     void ModifyPlayerHealth(float Amount);
 

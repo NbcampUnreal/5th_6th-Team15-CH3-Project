@@ -105,17 +105,23 @@ void AMonsterAIController::OnPerceptionUpdated(AActor* Actor, FAIStimulus Stimul
 	}
 }
 
-//void AMonsterAIController::StartChasing(AActor* Target)
-//{
-//	if (bIsChasing && CurrentTarget == Target) return;
-//
-//	CurrentTarget = Target;
-//	bIsChasing = true;
-//
-//	GetWorldTimerManager().ClearTimer(RandomMoveTimer);
-//
-//	if(AAIMonsterCharacter* )
-//
-//}
-//void AMonsterAIController::StopChasing();
-//void AMonsterAIController::UpdateChase();
+void AMonsterAIController::StartChasing(AActor* Target)
+{
+	if (bIsChasing && CurrentTarget == Target) return;
+
+	CurrentTarget = Target;
+	bIsChasing = true;
+
+	GetWorldTimerManager().ClearTimer(RandomMoveTimer);
+
+	//if(AAIMonsterCharacter* )
+
+}
+void AMonsterAIController::StopChasing()
+{
+
+}
+void AMonsterAIController::UpdateChase() 
+{
+
+}

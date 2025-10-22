@@ -146,7 +146,7 @@ void AGM_GameMode::PlayerHit(float Damage)
     if (AGS_GameState* GS = GetGameState<AGS_GameState>())
     {
         //공격 처리 후 패배 조건 확인
-        GS->ModifyPlayerHealth(-Damage);
+        //GS->ModifyPlayerHealth(-Damage);
         CheckLoseCondition();
     }
 }
