@@ -4,6 +4,7 @@
 #include "Perception/AISenseConfig_Sight.h"
 #include "TimerManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "AI_Monster/AIMonsterCharacter.h"
 
 
 AMonsterAIController::AMonsterAIController()
@@ -114,14 +115,49 @@ void AMonsterAIController::StartChasing(AActor* Target)
 
 	GetWorldTimerManager().ClearTimer(RandomMoveTimer);
 
-	//if(AAIMonsterCharacter* )
+	if (AAIMonsterCharacter* EnemyChar = Cast<AAIMonsterCharacter>(GetPawn()))
+	{
+		EnemyChar->SetMovemonetSpeed(EnemyChar->RunSpeed);
+	}
+	UpdateChase();
+
+	GetWorldTimerManager().SetTimer
+	(
+		ChaseTimer,
+		this,
+		&AMonsterAIController::UpdateChase,
+		0.25f,
+		true
+	);
 
 }
 void AMonsterAIController::StopChasing()
 {
+	if (!bIsChasing) return;
+	CurrentTarget = nullptr;
+	bIsChasing = false;
+	GetWorldTimerManager().ClearTimer(ChaseTimer);
+	StopMovement();
 
+	if (AAIMonsterCharacter* EnemyChar = Cast<AAIMonsterCharacter>(GetPawn()))
+	{
+		EnemyChar->SetMovemonetSpeed(EnemyChar->WalkSpeed);
+	}
+
+	GetWorldTimerManager().SetTimer
+	(
+		ChaseTimer,
+		this,
+		&AMonsterAIController::MoveTorRandomLocation,
+		3.0f,
+		true,
+		2.0f
+	);
 }
 void AMonsterAIController::UpdateChase() 
 {
-
+	if (CurrentTarget && bIsChasing)
+	{
+		MoveToActor(CurrentTarget, 100.0f);
+	}
 }
