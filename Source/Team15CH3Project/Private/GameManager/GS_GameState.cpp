@@ -1,12 +1,9 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "GameManager/GS_GameState.h"
 #include "Net/UnrealNetwork.h"
 
 AGS_GameState::AGS_GameState()
 {
-    //Àç½ÃÀÛ½Ã ÃÊ±â°ª ¼³Á¤
+    //����۽� �ʱⰪ ����
     Stamina = 100.0f;
     CurrentWave = 0;
     bBossDefeated = false;
