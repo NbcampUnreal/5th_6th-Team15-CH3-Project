@@ -6,7 +6,7 @@
 
 AGS_GameState::AGS_GameState()
 {
-    //����۽� �ʱⰪ ����
+    //Àç½ÃÀÛ½Ã ÃÊ±â°ª ¼³Á¤
     Stamina = 100.0f;
     CurrentWave = 0;
     bBossDefeated = false;
