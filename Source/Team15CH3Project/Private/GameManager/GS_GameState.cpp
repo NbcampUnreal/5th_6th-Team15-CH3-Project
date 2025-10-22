@@ -23,3 +23,8 @@ void AGS_GameState::AddEnemyKillCount()
 {
     EnemyKillCount++;
 }
+
+void AGS_GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+
+}

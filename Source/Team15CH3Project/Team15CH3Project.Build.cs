@@ -26,7 +26,7 @@ public class Team15CH3Project : ModuleRules
 			"AIModule",
 			"NavigationSystem",
 			"GameplayTasks",
-      "GameplayTags"
+			"GameplayTags",
 			"UMG"
 		});
 	}

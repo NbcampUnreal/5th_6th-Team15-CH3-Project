@@ -46,6 +46,5 @@ private:
 
 	void StartChasing(AActor* Target);
 	void StopChasing();
-	void UpdateChase()
-;
+	void UpdateChase();
 };
