@@ -1,6 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "GameManager/GS_GameState.h"
 #include "Net/UnrealNetwork.h"
 
