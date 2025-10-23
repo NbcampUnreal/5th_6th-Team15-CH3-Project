@@ -71,5 +71,43 @@ void UFrontendUISubsystem::PushSoftWidgetToStackAynsc(const FGameplayTag& InWidg
 
 void UFrontendUISubsystem::PushConfirmScreenToModalStackAynsc(EConfirmScreenType InScreenType, const FText& InScreenTitle, const FText& InScreenMsg, TFunction<void(EConfirmScreenButtonType)> ButtonClickedCallback)
 {
-	// 내일 작성
+	UConfirmScreenInfoObject* CreatedInfoObject = nullptr;
+
+	switch (InScreenType)
+	{
+	case EConfirmScreenType::Ok:
+		CreatedInfoObject = UConfirmScreenInfoObject::CreateOKScreen(InScreenTitle, InScreenMsg);
+		break;
+
+	case EConfirmScreenType::YesNo:
+		CreatedInfoObject = UConfirmScreenInfoObject::CreateYesNoScreen(InScreenTitle, InScreenMsg);
+		break;
+
+	case EConfirmScreenType::OKCancel:
+		CreatedInfoObject = UConfirmScreenInfoObject::CreateOkCancelScreen(InScreenTitle, InScreenMsg);
+		break;
+
+	case EConfirmScreenType::Unkown:
+		break;
+	default:
+		break;
+	}
+
+	check(CreatedInfoObject);
+
+	
+
+
+	PushSoftWidgetToStackAynsc(
+		FrontendGamePlayTags::Frontend_WidgetStack_Modal,
+		UFrontendFunctionLibrary::GetFrontendSoftWidgetClassByTag(FrontendGamePlayTags::Frontend_Widget_ConfirmScreen),
+		[CreatedInfoObject, ButtonClickedCallback](EAsyncPushWidgetState InPushState, UWidget_ActivatableBase* PushedWidget)
+		{
+			if (InPushState == EAsyncPushWidgetState::OnCreatedBeforePush)
+			{
+				UWidget_ConfirmScreen* CreatedConfirmScreen = CastChecked<UWidget_ConfirmScreen>(PushedWidget);
+				CreatedConfirmScreen->InitConfirmScreen(CreatedInfoObject, ButtonClickedCallback);
+			}
+		}
+	);
 }
