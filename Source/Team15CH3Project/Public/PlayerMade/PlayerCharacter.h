@@ -23,7 +23,6 @@ class TEAM15CH3PROJECT_API APlayerCharacter : public ACharacter
 public:
 	APlayerCharacter();
 
-	// 💡 [수정됨] 피격 처리를 위해 TakeDamage 오버라이드
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
 protected:
