@@ -37,16 +37,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UCapsuleComponent* CapsuleComp;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float AttackCooldown;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float AttackDamage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float AttackRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float MaxHP;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") float CurrentHP;
+
 	UPROPERTY()
 	AActor* CurrentTarget = nullptr;
 
 private:
-
-	UPROPERTY(EditAnywhere, Category = "Combat") float AttackCooldown; 
-	UPROPERTY(EditAnywhere, Category = "Combat") float AttackDamage; 
-	UPROPERTY(EditAnywhere, Category = "Combat") float AttackRange; 
-	UPROPERTY(EditAnywhere, Category = "Combat") float MaxHP;  
-	UPROPERTY(VisibleAnywhere, Category = "Combat") float CurrentHP;
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI|Combat")
 	class UAnimMontage* AttackMontage;
@@ -58,6 +58,11 @@ private:
 	class UParticleSystem* HitEffect;
 
 	//virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent,
+		class AController* EventInstigator, AActor* DamageCauser) override;
+
+	void HandleDeath();
 	
 	float LastAttackTime;          
 
