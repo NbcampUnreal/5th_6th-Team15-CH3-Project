@@ -12,4 +12,5 @@ class TEAM15CH3PROJECT_API UCommonUserWidget_Skill : public UUserWidget
 {
     GENERATED_BODY()
 
+
 };
