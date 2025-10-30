@@ -153,144 +153,137 @@ void UCommonUserWidget_Skill_Slot::OnSkillButtonClicked()
 {
 	if (!SelectedSkillImage) return;
 
-	int32 CurrentStack = 0;
+// 플레이어 참조 가져오기
+APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+if (!PlayerCharacter)
+{
+    UE_LOG(LogTemp, Error, TEXT("PlayerCharacter not found."));
+    return;
+}
 
-	if (APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
-	{
-		USkillInventoryComponent* SkillInventory = PlayerCharacter->FindComponentByClass<USkillInventoryComponent>();
-		UCharacterStatsComponent* StatComponent = PlayerCharacter->FindComponentByClass<UCharacterStatsComponent>();
+// 컴포넌트 가져오기
+USkillInventoryComponent* SkillInventory = PlayerCharacter->FindComponentByClass<USkillInventoryComponent>();
+UCharacterStatsComponent* StatComponent = PlayerCharacter->FindComponentByClass<UCharacterStatsComponent>();
 
-		if (SkillInventory && StatComponent)
+if (!SkillInventory || !StatComponent)
+{
+    UE_LOG(LogTemp, Error, TEXT("SkillInventory or StatComponent not found."));
+    return;
+}
+
+// --- 배열에서 스킬 검색 ---
+int32 CurrentStack = 0;
+FPassiveItemData* ExistingSkill = nullptr;
+
+for (FPassiveItemData& Skill : SkillInventory->PassiveSkillsInv)
+{
+    if (Skill.Type == SavedPassiveSkillData.Type)
+    {
+        ExistingSkill = &Skill;
+        break;
+    }
+}
+
+if (ExistingSkill)
+{
+    // 이미 존재하면 스택 증가
+    ExistingSkill->StackCnt++;
+    CurrentStack = ExistingSkill->StackCnt;
+    UE_LOG(LogTemp, Log, TEXT("Existing skill '%s' found. Stack increased to %d."), *ExistingSkill->SkillName.ToString(), CurrentStack);
+}
+else
+{
+    // 새 스킬 추가
+    FPassiveItemData NewSkill = SavedPassiveSkillData;
+    NewSkill.StackCnt = 1;
+
+    SkillInventory->PassiveSkillsInv.Add(NewSkill);
+    CurrentStack = NewSkill.StackCnt;
+
+    UE_LOG(LogTemp, Log, TEXT("New skill '%s' added to inventory. Stack: %d"), *NewSkill.SkillName.ToString(), CurrentStack);
+}
+
+// --- 공격력 적용 ---
+if (SavedPassiveSkillData.Type == EPassiveItemType::AttackPowerBoost)
+{
+    // BaseAttackDamage가 0이면 StatComponent에서 가져오기
+    if (BaseAttackDamage <= 0.0f)
+    {
+        BaseAttackDamage = StatComponent->AttackDamage;
+    }
+
+    float NewDamage = BaseAttackDamage * (1.0f + 0.1f * CurrentStack);
+    StatComponent->AttackDamage = NewDamage;
+
+    UE_LOG(LogTemp, Warning, TEXT("AttackDamage updated: %.1f (Stack: %d)"), StatComponent->AttackDamage, CurrentStack);
+}
+
+    //HUD 갱신
+    if (UCommonUserWidget_BattleGameHUD* BattleHUD = GetBattleHUD())
+    {
+		if (!SelectedSkillImage) return;
+
+		// 1번 슬롯
+		if (BattleHUD->SkillSlot_1_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_1_Type == EPassiveItemType::None)
 		{
-			// 스킬 추가 및 스택 증가
-			SkillInventory->AddPassiveSkill(SavedPassiveSkillData);
+			BattleHUD->Image_Skill_1->SetBrush(SelectedSkillImage->GetBrush());
+			BattleHUD->Image_Skill_1->SetColorAndOpacity(FLinearColor::White);
 
-			// 최신 스택 가져오기
-			for (const FPassiveItemData& Skill : SkillInventory->PassiveSkillsInv)
-			{
-				if (Skill.Type == SavedPassiveSkillData.Type)
-				{
-					CurrentStack = Skill.StackCnt;
-					break;
-				}
-			}
+			int32 DisplayStack = FMath::Min(CurrentStack, 5);
+			BattleHUD->StackCnt_1->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayStack)));
+			BattleHUD->StackCnt_1->SetVisibility(ESlateVisibility::Visible);
 
-			// 공격력 적용 (BaseAttackDamage 기준)
-			if (SavedPassiveSkillData.Type == EPassiveItemType::AttackPowerBoost)
-			{
-				if (BaseAttackDamage <= 0.0f)
-				{
-					BaseAttackDamage = StatComponent->AttackDamage; //재확인
-				}
-
-				float NewDamage = BaseAttackDamage * (1.0f + 0.1f * CurrentStack);
-				StatComponent->AttackDamage = NewDamage;
-
-				UE_LOG(LogTemp, Warning, TEXT("AttackDamage updated: %.1f (Stack: %d)"), StatComponent->AttackDamage, CurrentStack);
-			}
-
-			//=============================================================================== Image & HUD Update
-			UCommonUserWidget_BattleGameHUD* BattleHUD = GetBattleHUD();
-			if (BattleHUD)
-			{
-				struct FSkillSlotInfo
-				{
-					UImage* Image;
-					UTextBlock* StackText;
-					EPassiveItemType Type;
-					int32 Stack;
-				};
-
-				static TArray<FSkillSlotInfo> SkillSlots;
-
-				for (int32 i = 0; i < SkillSlots.Num(); i++)
-				{
-					if (!IsValid(SkillSlots[i].Image) || !IsValid(SkillSlots[i].StackText))
-					{
-						UE_LOG(LogTemp, Warning, TEXT("Invalid SkillSlot found. Clearing SkillSlots."));
-						SkillSlots.Empty();
-						break;
-					}
-				}
-
-				// 초기 슬롯 설정 (처음 실행 시 한 번만)
-				if (SkillSlots.Num() == 0)
-				{
-					SkillSlots.SetNum(4);
-					SkillSlots[0] = { BattleHUD->Image_Skill_1, BattleHUD->StackCnt_1, EPassiveItemType::None, 0 };
-					SkillSlots[1] = { BattleHUD->Image_Skill_2, BattleHUD->StackCnt_2, EPassiveItemType::None, 0 };
-					SkillSlots[2] = { BattleHUD->Image_Skill_3, BattleHUD->StackCnt_3, EPassiveItemType::None, 0 };
-					SkillSlots[3] = { BattleHUD->Image_Skill_4, BattleHUD->StackCnt_4, EPassiveItemType::None, 0 };
-				}
-
-				bool bFoundSameType = false;
-
-				// 이미 같은 타입의 스킬이 있는지 확인
-				for (FSkillSlotInfo& SkillSlot : SkillSlots)
-				{
-					if (SkillSlot.Type == SavedPassiveSkillData.Type)
-					{
-						bFoundSameType = true;
-
-						// 스택 증가 (최대 5)
-						if (SkillSlot.Stack < 5)
-						{
-							SkillSlot.Stack++;
-							FString LevelText = FString::Printf(TEXT("Lv.%d"), SkillSlot.Stack);
-							if (SkillSlot.StackText)
-							{
-								SkillSlot.StackText->SetText(FText::FromString(LevelText));
-								SkillSlot.StackText->SetVisibility(ESlateVisibility::Visible);
-							}
-						}
-						else
-						{
-							UE_LOG(LogTemp, Warning, TEXT("Skill %d is already at max stack (5)."), (int32)SavedPassiveSkillData.Type);
-						}
-
-						break;
-					}
-				}
-
-				// 같은 타입이 없다면 새 슬롯에 추가
-				if (!bFoundSameType)
-				{
-					for (FSkillSlotInfo& SkillSlot : SkillSlots)
-					{
-						if (SkillSlot.Type == EPassiveItemType::None)
-						{
-							SkillSlot.Type = SavedPassiveSkillData.Type;
-							SkillSlot.Stack = 1;
-
-							if (SkillSlot.Image)
-							{
-								SkillSlot.Image->SetBrush(SelectedSkillImage->GetBrush());
-								SkillSlot.Image->SetColorAndOpacity(FLinearColor::White);
-							}
-
-							if (SkillSlot.StackText)
-							{
-								SkillSlot.StackText->SetText(FText::FromString(TEXT("Lv.1")));
-								SkillSlot.StackText->SetVisibility(ESlateVisibility::Visible);
-							}
-
-							break;
-						}
-					}
-				}
-
-				// 뷰포트 갱신
-				if (UWorld* World = GetWorld())
-				{
-					if (UGameViewportClient* ViewportClient = World->GetGameViewport())
-					{
-						ViewportClient->RemoveAllViewportWidgets();
-					}
-				}
-				BattleHUD->AddToViewport();
-			}
+			BattleHUD->SkillSlot_1_Type = SavedPassiveSkillData.Type;
 		}
-	}
+
+		// 2번 슬롯
+		else if (BattleHUD->SkillSlot_2_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_2_Type == EPassiveItemType::None)
+		{
+			BattleHUD->Image_Skill_2->SetBrush(SelectedSkillImage->GetBrush());
+			BattleHUD->Image_Skill_2->SetColorAndOpacity(FLinearColor::White);
+
+			int32 DisplayStack = FMath::Min(CurrentStack, 5);
+			BattleHUD->StackCnt_2->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayStack)));
+			BattleHUD->StackCnt_2->SetVisibility(ESlateVisibility::Visible);
+
+			BattleHUD->SkillSlot_2_Type = SavedPassiveSkillData.Type;
+		}
+
+		// 3번 슬롯
+		else if (BattleHUD->SkillSlot_3_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_3_Type == EPassiveItemType::None)
+		{
+			BattleHUD->Image_Skill_3->SetBrush(SelectedSkillImage->GetBrush());
+			BattleHUD->Image_Skill_3->SetColorAndOpacity(FLinearColor::White);
+
+			int32 DisplayStack = FMath::Min(CurrentStack, 5);
+			BattleHUD->StackCnt_3->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayStack)));
+			BattleHUD->StackCnt_3->SetVisibility(ESlateVisibility::Visible);
+
+			BattleHUD->SkillSlot_3_Type = SavedPassiveSkillData.Type;
+		}
+
+		// 4번 슬롯
+		else if (BattleHUD->SkillSlot_4_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_4_Type == EPassiveItemType::None)
+		{
+			BattleHUD->Image_Skill_4->SetBrush(SelectedSkillImage->GetBrush());
+			BattleHUD->Image_Skill_4->SetColorAndOpacity(FLinearColor::White);
+
+			int32 DisplayStack = FMath::Min(CurrentStack, 5);
+			BattleHUD->StackCnt_4->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayStack)));
+			BattleHUD->StackCnt_4->SetVisibility(ESlateVisibility::Visible);
+
+			BattleHUD->SkillSlot_4_Type = SavedPassiveSkillData.Type;
+		}
+        // 뷰포트 갱신
+        if (UWorld* World = GetWorld())
+        {
+            if (UGameViewportClient* ViewportClient = World->GetGameViewport())
+            {
+                ViewportClient->RemoveAllViewportWidgets();
+            }
+        }
+        BattleHUD->AddToViewport();
+    }
 }
 
 UCommonUserWidget_BattleGameHUD* UCommonUserWidget_Skill_Slot::GetBattleHUD()
