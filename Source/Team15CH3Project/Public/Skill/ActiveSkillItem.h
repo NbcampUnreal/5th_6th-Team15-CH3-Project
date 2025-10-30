@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Skill/Base_item.h"
+#include "Skill/Actor/PowerSurgeBullet.h"
 #include "ActiveSkillItem.generated.h"
 
 UENUM(BluePrintType)
@@ -46,6 +47,9 @@ public:
 	
 	virtual void BeginPlay() override;
 	void ActiveSkillApply(class APlayerCharacter* Target);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill|Effect")
+	TSubclassOf<APowerSurgeBullet> PowerSurgeBulletEffectActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	FActiveSkillItemData ActiveSkillData;

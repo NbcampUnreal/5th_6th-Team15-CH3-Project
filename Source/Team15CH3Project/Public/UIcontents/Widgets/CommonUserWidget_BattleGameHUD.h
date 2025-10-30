@@ -40,4 +40,5 @@ public:
 
     UPROPERTY()
     TArray<EPassiveItemType> AssignedSkillTypes;
+
 };

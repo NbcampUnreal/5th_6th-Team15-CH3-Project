@@ -51,7 +51,7 @@ void ApassiveItem::PassiveSkillApply(APlayerCharacter* Target)
 
 		break;
 	case EPassiveItemType::AttackIncreasingDirection:
-		
+		Stats->ProjectileCount = Stats->ProjectileCount++;
 		break;
 	case EPassiveItemType::BulletBoost:
 
