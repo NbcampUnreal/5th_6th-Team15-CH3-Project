@@ -3,6 +3,17 @@
 #include "CoreMinimal.h"
 #include "CommonUserWidget.h"
 #include "Skill/PassiveItem.h"
+#include "Blueprint/UserWidget.h"
+
+// HUD 위젯에서 사용되는 컴포넌트
+#include "Components/Image.h"
+#include "Components/TextBlock.h"
+#include "Components/ProgressBar.h"
+
+// PlayerCharacter, StatsComponent
+#include "PlayerMade/PlayerCharacter.h"
+#include "PlayerMade/CharacterStatsComponent.h"
+
 #include "CommonUserWidget_BattleGameHUD.generated.h"
 
 
@@ -39,6 +50,44 @@ public:
     class UTextBlock* StackCnt_4;
 
     UPROPERTY()
+    EPassiveItemType SkillSlot_1_Type = EPassiveItemType::None;
+
+    UPROPERTY()
+    EPassiveItemType SkillSlot_2_Type = EPassiveItemType::None;
+
+    UPROPERTY()
+    EPassiveItemType SkillSlot_3_Type = EPassiveItemType::None;
+
+    UPROPERTY()
+    EPassiveItemType SkillSlot_4_Type = EPassiveItemType::None;
+
+    UPROPERTY()
     TArray<EPassiveItemType> AssignedSkillTypes;
+
+
+
+    //HP & MP 바인드
+    UPROPERTY(meta = (BindWidget))
+    UProgressBar* HealthBar;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* HPText;
+
+    UPROPERTY(meta = (BindWidget))
+    UProgressBar* MPBar;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* MPText;
+
+    //플레이어 캐릭터 참조
+    UPROPERTY()
+    APlayerCharacter* MyPlayerChar;
+
+    //NativeTick 매프레임 업데이트 할 때 사용
+    virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
+
+    //초기화
+    UFUNCTION(BlueprintCallable)
+    void InitHUD();
 
 };

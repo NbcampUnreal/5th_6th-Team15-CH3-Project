@@ -34,13 +34,14 @@ APlayerCharacter::APlayerCharacter()
 
 	// === 2. 이동 및 회전 설정 ===
 	bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 0.0f, 0.0f);
 
-	// 💡 [추가] 이동 즉각성 향상을 위해 가속/감속 기본값 설정
-	// MaxWalkSpeed는 BeginPlay에서 StatsComponent 값으로 덮어쓰입니다.
-	GetCharacterMovement()->MaxAcceleration = 99999.0f; // 가속도를 최대로 올려 즉각 이동
-	GetCharacterMovement()->BrakingDecelerationWalking = 99999.0f; // 감속도를 최대로 올려 즉각 정지
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+
+	// 회전 속도 제한 (보간) - 낮을수록 부드럽게 회전
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+
+	GetCharacterMovement()->MaxAcceleration = 99999.0f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 99999.0f;
 }
 
 // Called when the game starts or when spawned
@@ -48,7 +49,6 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 💡 [수정] BeginPlay에서 MaxWalkSpeed 설정 로직을 분리하여 Move 함수 로직 제거 및 정리
 	if (UCharacterStatsComponent* StatsComp = FindComponentByClass<UCharacterStatsComponent>())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->MoveSpeed;
@@ -110,7 +110,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 		if (!MovementVector.IsNearlyZero())
 		{
 			const FVector MoveDir = (ForwardDirection * MovementVector.Y + RightDirection * MovementVector.X).GetSafeNormal();
-			SetActorRotation(MoveDir.Rotation());
+			//SetActorRotation(MoveDir.Rotation());
 		}
 
 		// if (UCharacterStatsComponent* StatsComp = FindComponentByClass<UCharacterStatsComponent>())
@@ -169,13 +169,11 @@ void APlayerCharacter::PlayerIsDead()
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
-	// AutoAttackComponent를 찾아서 타이머를 정지합니다.
 	//if (AutoAttackComponent)
 	//{
-	//	AutoAttackComponent->StopAutoAttack(); // AutoAttackComponent에 StopAutoAttack() 함수가 있다고 가정합니다.
+	//	AutoAttackComponent->StopAutoAttack(); // stopautoattack()없음, 만들어야함
 	//}
 
-	// 5초 후에 액터를 제거하는 로직을 추가합니다. (바로 제거하면 로그가 잘 안 보일 수 있습니다.)
-	// 게임 오버 처리는 일반적으로 Game Mode에서 하지만, 임시로 캐릭터를 제거합니다.
-	SetLifeSpan(5.0f); // 5초 후에 액터를 제거합니다.
+
+	SetLifeSpan(5.0f); // 5초 후에 플레이어 제거
 }

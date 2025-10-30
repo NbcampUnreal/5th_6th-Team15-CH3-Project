@@ -32,6 +32,16 @@ void AAI_MonsterController::OnPossess(APawn* InPawn)
 
 void AAI_MonsterController::StartChaseLoop()                  
 {
+
+	if (!PlayerPawnCached)
+	{
+		PlayerPawnCached = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
+		if (!PlayerPawnCached)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("[MeleeAI] PlayerPawnCached is NULL, cannot start chase yet"));
+			return; 
+		}
+	}
 	//UE_LOG(LogTemp, Warning, TEXT("[RUN] AI Controller is controlling"));
 	MoveToActor(PlayerPawnCached, 120.f, true);
 	//UE_LOG(LogTemp, Warning, TEXT("[PlayerPawnCash] %s"), *(PlayerPawnCached->GetName()));//AcceptanceRadius= 120πÃ≈Õ  bStopOnOverlap=∞° true

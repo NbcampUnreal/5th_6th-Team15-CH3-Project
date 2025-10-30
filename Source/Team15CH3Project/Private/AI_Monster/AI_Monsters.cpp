@@ -1,11 +1,13 @@
 ﻿#include "AI_Monster/AI_Monsters.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "AI_Monster/AI_MonsterController.h"
+#include "AI_Monster/Ranged_MonsterController.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Controller.h"
 #include "PlayerMade/PlayerCharacter.h"
 #include "GameFramework/DamageType.h"
 #include "Components/CapsuleComponent.h" 
+
 
 
 AAI_Monsters::AAI_Monsters()
@@ -20,7 +22,7 @@ AAI_Monsters::AAI_Monsters()
 	MaxHP = 300.0f;
 	CurrentHP = MaxHP;
 
-	AttackRange = 100.f;
+	AttackRange = 175.f;
 	AttackCooldown = 1.5f;
 	AttackDamage = 15.f;
 	LastAttackTime = -1000.0f;
@@ -34,8 +36,18 @@ void AAI_Monsters::BeginPlay()
 	//UE_LOG(LogTemp, Warning, TEXT("[Monster] AI Character has been spawned."));
 
 	SetMovementSpeed(WalkSpeed);
-	AAI_MonsterController* MonsterController = Cast< AAI_MonsterController>(GetController());
-	MonsterController->StartChaseLoop();
+
+	if (AAI_MonsterController* MeleeCtrl = Cast<AAI_MonsterController>(GetController()))
+	{
+		MeleeCtrl->StartChaseLoop();
+		return;
+	}
+
+	if (ARanged_MonsterController* RangedCtrl = Cast<ARanged_MonsterController>(GetController()))
+	{
+		RangedCtrl->StartChaseLoop();
+		return;
+	}
 }
 
 void AAI_Monsters::SetMovementSpeed(float NewSpeed)
@@ -87,6 +99,7 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 
 	if (IsDead())
 	{
+		// 캐릭터 스테이터스에 접근해서 경험치를 제공하는 기능 추가해야함
 		HandleDeath();
 		SetLifeSpan(3.0f);
 	}
