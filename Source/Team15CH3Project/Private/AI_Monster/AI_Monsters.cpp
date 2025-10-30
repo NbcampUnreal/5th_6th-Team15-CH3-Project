@@ -4,6 +4,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Controller.h"
 #include "PlayerMade/PlayerCharacter.h"
+#include "GameFramework/DamageType.h"
+#include "Components/CapsuleComponent.h" 
 
 
 AAI_Monsters::AAI_Monsters()
@@ -18,7 +20,7 @@ AAI_Monsters::AAI_Monsters()
 	MaxHP = 300.0f;
 	CurrentHP = MaxHP;
 
-	AttackRange = 180.f;
+	AttackRange = 100.f;
 	AttackCooldown = 1.5f;
 	AttackDamage = 15.f;
 	LastAttackTime = -1000.0f;
@@ -60,8 +62,44 @@ void AAI_Monsters::PerformAttack(APawn* Target)
 
 	LastAttackTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
 
+	UGameplayStatics::ApplyDamage(
+		Target,
+		AttackDamage,
+		GetController(),
+		this,
+		UDamageType::StaticClass()
+	);
+
 	UE_LOG(LogTemp, Warning, TEXT("[Monster] Attack! Target=%s, Damage=%.1f, Dist=%.0f"), *Target->GetName(), AttackDamage, FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()));
 
 
+}
+
+float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
+	AController* EventInstigator, AActor* DamageCauser)
+{
+	const float Applied = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	if (IsDead()) return 0.f;
+
+	CurrentHP = FMath::Clamp(CurrentHP - Applied, 0.f, MaxHP);
+	UE_LOG(LogTemp, Log, TEXT("[Monster] -%.1f HP -> %.1f / %.1f"), Applied, CurrentHP, MaxHP);
+
+	if (IsDead())
+	{
+		HandleDeath();
+		SetLifeSpan(3.0f);
+	}
+	return Applied;
+}
+
+void AAI_Monsters::HandleDeath()
+{
+	DetachFromControllerPendingDestroy();
+
+	if (UCapsuleComponent* Cap = GetCapsuleComponent())
+	{
+		Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 
