@@ -38,6 +38,13 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCharacterStatsComponent* StatsComponent;
 
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//* SkillInventory;
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	//* SkillUseIndicator;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputMappingContext* InputMappingContext;
 
