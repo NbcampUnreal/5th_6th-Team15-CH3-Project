@@ -51,4 +51,5 @@ public:
     void SetupInitialData();
 
     static int32 LastAssignedSlotIndex;
+
 };

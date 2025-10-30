@@ -72,9 +72,8 @@ void AAI_MonsterController::UpdateChaseLoop()
 		{
 			if (M->CanAttack(PlayerPawnCached))
 			{
-				
-			}//UE_LOG(LogTemp, Warning, TEXT("[Do Attack]"));
 				M->PerformAttack(PlayerPawnCached);
+			}//UE_LOG(LogTemp, Warning, TEXT("[Do Attack]"));
 		}
 		return;
 	}
