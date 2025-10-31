@@ -14,6 +14,7 @@ class UAutoAttackComponent;
 class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
+class UAnimMontage;
 
 UCLASS()
 class TEAM15CH3PROJECT_API APlayerCharacter : public ACharacter
@@ -50,6 +51,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* MoveAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
+	class UAnimMontage* DeathMontage;
 
 protected:
 	virtual void BeginPlay() override;

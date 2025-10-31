@@ -9,7 +9,8 @@
 #include "InputAction.h"
 #include "PlayerMade/CharacterStatsComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "PlayerMade/AutoAttackComponent.h" // 💡 [추가] AutoAttackComponent 사용을 위해 필요
+#include "PlayerMade/AutoAttackComponent.h" 
+#include "Animation/AnimMontage.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -34,13 +35,14 @@ APlayerCharacter::APlayerCharacter()
 
 	// === 2. 이동 및 회전 설정 ===
 	bUseControllerRotationYaw = false;
-
 	GetCharacterMovement()->bOrientRotationToMovement = true;
-
-	// 회전 속도 제한 (보간) - 낮을수록 부드럽게 회전
+	// 💡 [수정됨] 회전 속도 제한 (보간) - 낮을수록 부드럽게 회전
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 
+	// 💡 [수정됨] 가속도를 최대로 올려 즉각 이동
 	GetCharacterMovement()->MaxAcceleration = 99999.0f;
+
+	// 💡 [수정됨] 감속도를 최대로 올려 즉각 정지
 	GetCharacterMovement()->BrakingDecelerationWalking = 99999.0f;
 }
 
@@ -49,6 +51,7 @@ void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 💡 [수정됨] BeginPlay에서 MaxWalkSpeed 설정
 	if (UCharacterStatsComponent* StatsComp = FindComponentByClass<UCharacterStatsComponent>())
 	{
 		GetCharacterMovement()->MaxWalkSpeed = StatsComp->MoveSpeed;
@@ -110,6 +113,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 		if (!MovementVector.IsNearlyZero())
 		{
 			const FVector MoveDir = (ForwardDirection * MovementVector.Y + RightDirection * MovementVector.X).GetSafeNormal();
+			// 💡 [수정됨] 직접 회전 코드를 제거하여 CharacterMovementComponent의 RotationRate를 따르게 함
 			//SetActorRotation(MoveDir.Rotation());
 		}
 
@@ -128,7 +132,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 		//if (!FMath::IsNearlyZero(MovementVector.X))
 		//{
-		//	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		//	const FVector RightDirection = FRotator(YawRotation).GetUnitAxis(EAxis::Y);
 		//	AddMovementInput(RightDirection, MovementVector.X);
 		//}
 	}
@@ -144,8 +148,8 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 	// StatsComponent의 데미지 처리 로직 호출
 	const float ActualDamage = StatsComponent->TakeDamage(DamageAmount);
 
-	// 사망했는지 확인하고, 캐릭터의 물리적 반응 처리
-	if (StatsComponent->IsDead())
+	// 💡 [수정됨] 사망했는지 확인하고, 캐릭터의 물리적 반응 처리
+	if (StatsComponent->IsDead() && GetLifeSpan() == 0.0f)
 	{
 		PlayerIsDead();
 	}
@@ -156,6 +160,12 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 void APlayerCharacter::PlayerIsDead()
 {
 	UE_LOG(LogTemp, Error, TEXT("PLAYER IS DEAD! Deactivating input and collision."));
+
+	if (DeathMontage && GetMesh() && GetMesh()->GetAnimInstance())
+	{
+		// 몽타주를 재생하여 Death_Forward 애니메이션을 즉시 출력
+		GetMesh()->GetAnimInstance()->Montage_Play(DeathMontage, 1.0f);
+	}
 
 	// 1. 입력 비활성화
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -169,11 +179,11 @@ void APlayerCharacter::PlayerIsDead()
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 
-	//if (AutoAttackComponent)
-	//{
-	//	AutoAttackComponent->StopAutoAttack(); // stopautoattack()없음, 만들어야함
-	//}
+	if (AutoAttackComponent)
+	{
+		AutoAttackComponent->StopAutoAttack();
+	}
 
-
-	SetLifeSpan(5.0f); // 5초 후에 플레이어 제거
+	// 5초 후에 액터를 제거하는 로직을 추가합니다. 
+	SetLifeSpan(5.0f);
 }
