@@ -58,6 +58,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	FPassiveItemData PassiveSkillData;
 
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	EPassiveItemType PassiveType;
 };

@@ -4,8 +4,6 @@
 #include "GameFramework/Actor.h"
 #include "NapalmAttack.generated.h"
 
-class USphereComponent;
-
 UCLASS()
 class TEAM15CH3PROJECT_API ANapalmAttack : public AActor
 {
@@ -22,9 +20,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NapalmAttack")
 	USceneComponent* SceneRoot;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NapalmAttack")
-	USphereComponent* CollisionComp;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NapalmAttack")
 	UStaticMeshComponent* CastingMeshIn;
 
@@ -38,12 +33,9 @@ protected:
 	float GrowSpeed;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
-	float MaxXScale;
+	float MaxScale;
 
-	UPROPERTY(EditAnywhere, Category = "Skill")
-	float BaseYScale;
-
-	float CurrentXScale;
+	float CurrentScale;
 
 	// Æø¹ß °ü·Ã
 	UPROPERTY(EditAnywhere, Category = "Skill")
@@ -51,26 +43,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	float Damage;
-
-	UPROPERTY(EditAnywhere, Category = "Explosion")
-	int32 MinExplosionCount;
-
-	UPROPERTY(EditAnywhere, Category = "Explosion")
-	int32 MaxExplosionCount;
-
-	UPROPERTY(EditAnywhere, Category = "Explosion")
-	float MinExplosionDelay;
-
-	UPROPERTY(EditAnywhere, Category = "Explosion")
-	float MaxExplosionDelay;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill|Effect")
-	float EllipseRadiusX;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill|Effect")
-	float EllipseRadiusY;
-
-	TArray<FTimerHandle> ExplosionTimers;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	UParticleSystem* ExplosionEffect;

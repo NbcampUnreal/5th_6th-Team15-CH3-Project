@@ -37,16 +37,19 @@ public:
     UFUNCTION()
     void OnSkillButtonClicked();
 
+    UCommonUserWidget_BattleGameHUD* GetBattleHUD();
+
     UPROPERTY()
     class UImage* SelectedSkillImage;
 
     UPROPERTY()
     FPassiveItemData SavedPassiveSkillData;
 
-    static int32 LastAssignedSlotIndex;
-    static float StaticBaseAttackDamage;
+    UPROPERTY()
+    float BaseAttackDamage;
 
-private:
-    UCommonUserWidget_BattleGameHUD* GetBattleHUD();
+    void SetupInitialData();
+
+    static int32 LastAssignedSlotIndex;
 
 };
