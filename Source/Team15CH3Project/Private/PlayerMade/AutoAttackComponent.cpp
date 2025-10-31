@@ -31,6 +31,16 @@ void UAutoAttackComponent::BeginPlay()
     }
 }
 
+void UAutoAttackComponent::StopAutoAttack()
+{
+    if (GetWorld())
+    {
+        GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+        UE_LOG(LogTemp, Warning, TEXT("Auto Attack Stopped by PlayerIsDead event."));
+    }
+}
+
+
 // ====================================================================
 // 공격 제어 로직
 // ====================================================================
