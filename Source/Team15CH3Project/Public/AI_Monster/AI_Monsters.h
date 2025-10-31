@@ -5,6 +5,7 @@
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "AI_Monster/MonsterBullet.h"
 #include "AI_Monsters.generated.h"
 
 class UCapsuleComponent;
@@ -19,14 +20,19 @@ public:
 	AAI_Monsters();
 
 	bool CanAttack(APawn* Target) const;
+	bool ReangCanAttak(APawn* Traget) const;
 	void PerformAttack(APawn* Target);
-	bool IsDead() const { return CurrentHP <= 0.f; } 
+	void BulletAttack(APawn* Target);
+	bool IsDead() const { return CurrentHP <= 0.f; }
 
 	UPROPERTY(EditAnyWhere, Category = "AI")
 	float WalkSpeed = 400.0f; // AI 몬스터 속도값을 정해주는 기능.
 
 	UPROPERTY(EditAnyWhere, Category = "AI")
 	float RunSpeed = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fire")
+	TSubclassOf<AMonsterBullet> Bullets;
 
 
 
@@ -42,6 +48,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float AttackCooldown;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float AttackDamage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float AttackRange;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float RangeAttackRange;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat") float MaxHP;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Combat") float CurrentHP;
 
