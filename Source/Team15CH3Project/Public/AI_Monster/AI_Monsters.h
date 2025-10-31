@@ -5,6 +5,9 @@
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BehaviorTree.h"
+//추가
+#include "Components/WidgetComponent.h"
+//끝
 #include "AI_Monsters.generated.h"
 
 class UCapsuleComponent;
@@ -27,9 +30,11 @@ public:
 
 	UPROPERTY(EditAnyWhere, Category = "AI")
 	float RunSpeed = 500.0f;
-
-
-
+	//추가
+	void UpdateOverheadHP();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HPUI")
+	class UWidgetComponent* HealthBarComp;
+	//끝
 
 
 protected:

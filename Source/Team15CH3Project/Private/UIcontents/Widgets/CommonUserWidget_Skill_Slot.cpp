@@ -13,13 +13,11 @@
 #include "Skill/passiveItem.h"
 
 int32 UCommonUserWidget_Skill_Slot::LastAssignedSlotIndex = 0;
+float UCommonUserWidget_Skill_Slot::StaticBaseAttackDamage = 0.0f;
 
-
-void UCommonUserWidget_Skill_Slot::NativeConstruct()
+void UCommonUserWidget_Skill_Slot::NativeConstruct() // 위젯이 처음 나타날 때 한번만 실행
 {
 	Super::NativeConstruct();
-
-	SetupInitialData();
 
 	if (SkillButton)
 	{
@@ -42,6 +40,30 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct()
 
 					const FPassiveItemData& Skill = ProGI->SkillDataAsset->PassiveSkills[RandomIndex];
 
+					int32 DisplayStack = Skill.StackCnt;
+
+					APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
+					USkillInventoryComponent* SkillInventory = PlayerCharacter ? PlayerCharacter->FindComponentByClass<USkillInventoryComponent>() : nullptr;
+
+					if (SkillInventory)
+					{
+						// 현재 인벤토리에서 해당 스킬 타입이 있는지 검색
+						for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+						{
+							if (InvSkill.Type == Skill.Type)
+							{
+								DisplayStack = InvSkill.StackCnt; // 현재 인벤토리의 스택 레벨
+
+								// 다음 레벨+1
+								if (DisplayStack < InvSkill.MaxStackCnt)
+								{
+									DisplayStack++;
+								}
+								break; //인벤토리에서 찾았으므로 반복 종료
+							}
+						}
+					}
 					SavedPassiveSkillData = Skill;
 
 					if (SkillNameText)
@@ -60,14 +82,13 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct()
 					}
 					if (StackText)
 					{
-						FString StackLevel = FString::Printf(TEXT("Lv.%d"), Skill.StackCnt);
+						FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
 						StackText->SetText(FText::FromString(StackLevel));
 					}
 				}
 			}
 		}
 	}
-
 	if (this->GetName().Contains(TEXT("WBP_Skill_Slot_2")))
 	{
 		if (UGameInstance* GI = UGameplayStatics::GetGameInstance(GetWorld()))
@@ -82,6 +103,30 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct()
 
 					const FPassiveItemData& Skill = ProGI->SkillDataAsset->PassiveSkills[RandomIndex];
 
+					int32 DisplayStack = Skill.StackCnt;
+
+					APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
+					USkillInventoryComponent* SkillInventory = PlayerCharacter ? PlayerCharacter->FindComponentByClass<USkillInventoryComponent>() : nullptr;
+
+					if (SkillInventory)
+					{
+						// 현재 인벤토리에서 해당 스킬 타입이 있는지 검색
+						for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+						{
+							if (InvSkill.Type == Skill.Type)
+							{
+								DisplayStack = InvSkill.StackCnt; // 현재 인벤토리의 스택 레벨
+
+								// 다음 레벨+1
+								if (DisplayStack < InvSkill.MaxStackCnt)
+								{
+									DisplayStack++;
+								}
+								break; //인벤토리에서 찾았으므로 반복 종료
+							}
+						}
+					}
 					SavedPassiveSkillData = Skill;
 
 					if (SkillNameText)
@@ -100,14 +145,13 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct()
 					}
 					if (StackText)
 					{
-						FString StackLevel = FString::Printf(TEXT("Lv.%d"), Skill.StackCnt);
+						FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
 						StackText->SetText(FText::FromString(StackLevel));
 					}
 				}
 			}
 		}
 	}
-
 	if (this->GetName().Contains(TEXT("WBP_Skill_Slot_3")))
 	{
 		if (UGameInstance* GI = UGameplayStatics::GetGameInstance(GetWorld()))
@@ -122,6 +166,30 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct()
 
 					const FPassiveItemData& Skill = ProGI->SkillDataAsset->PassiveSkills[RandomIndex];
 
+					int32 DisplayStack = Skill.StackCnt;
+
+					APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+
+					USkillInventoryComponent* SkillInventory = PlayerCharacter ? PlayerCharacter->FindComponentByClass<USkillInventoryComponent>() : nullptr;
+
+					if (SkillInventory)
+					{
+						// 현재 인벤토리에서 해당 스킬 타입이 있는지 검색
+						for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+						{
+							if (InvSkill.Type == Skill.Type)
+							{
+								DisplayStack = InvSkill.StackCnt; // 현재 인벤토리의 스택 레벨
+
+								// 다음 레벨+1
+								if (DisplayStack < InvSkill.MaxStackCnt)
+								{
+									DisplayStack++;
+								}
+								break; //인벤토리에서 찾았으므로 반복 종료
+							}
+						}
+					}
 					SavedPassiveSkillData = Skill;
 
 					if (SkillNameText)
@@ -140,7 +208,7 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct()
 					}
 					if (StackText)
 					{
-						FString StackLevel = FString::Printf(TEXT("Lv.%d"), Skill.StackCnt);
+						FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
 						StackText->SetText(FText::FromString(StackLevel));
 					}
 				}
@@ -153,70 +221,85 @@ void UCommonUserWidget_Skill_Slot::OnSkillButtonClicked()
 {
 	if (!SelectedSkillImage) return;
 
-// 플레이어 참조 가져오기
-APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
-if (!PlayerCharacter)
-{
-    UE_LOG(LogTemp, Error, TEXT("PlayerCharacter not found."));
-    return;
-}
+	// 플레이어 및 컴포넌트 참조 가져오기
+	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
+	if (!PlayerCharacter) {
+		UE_LOG(LogTemp, Error, TEXT("PlayerCharacter not found."));
+		return;
+	}
 
-// 컴포넌트 가져오기
-USkillInventoryComponent* SkillInventory = PlayerCharacter->FindComponentByClass<USkillInventoryComponent>();
-UCharacterStatsComponent* StatComponent = PlayerCharacter->FindComponentByClass<UCharacterStatsComponent>();
+	USkillInventoryComponent* SkillInventory = PlayerCharacter->FindComponentByClass<USkillInventoryComponent>();
+	UCharacterStatsComponent* StatComponent = PlayerCharacter->FindComponentByClass<UCharacterStatsComponent>();
 
-if (!SkillInventory || !StatComponent)
-{
-    UE_LOG(LogTemp, Error, TEXT("SkillInventory or StatComponent not found."));
-    return;
-}
+	if (!SkillInventory || !StatComponent) {
+		UE_LOG(LogTemp, Error, TEXT("SkillInventory or StatComponent not found."));
+		return;
+	}
 
-// --- 배열에서 스킬 검색 ---
-int32 CurrentStack = 0;
-FPassiveItemData* ExistingSkill = nullptr;
+	//StatComponent의 초기 공격력을 저장
+	if (FMath::IsNearlyZero(StaticBaseAttackDamage))
+	{
+		StaticBaseAttackDamage = StatComponent->AttackDamage;
+		UE_LOG(LogTemp, Log, TEXT("STATIC Base Attack CACHED: %.1f"), StaticBaseAttackDamage);
+	}
 
-for (FPassiveItemData& Skill : SkillInventory->PassiveSkillsInv)
-{
-    if (Skill.Type == SavedPassiveSkillData.Type)
-    {
-        ExistingSkill = &Skill;
-        break;
-    }
-}
+	//기존 스킬 존재 여부 확인 및 스택 계산
+	int32 CurrentStack = 0;
+	FPassiveItemData* ExistingSkill = nullptr;
 
-if (ExistingSkill)
-{
-    // 이미 존재하면 스택 증가
-    ExistingSkill->StackCnt++;
-    CurrentStack = ExistingSkill->StackCnt;
-    UE_LOG(LogTemp, Log, TEXT("Existing skill '%s' found. Stack increased to %d."), *ExistingSkill->SkillName.ToString(), CurrentStack);
-}
-else
-{
-    // 새 스킬 추가
-    FPassiveItemData NewSkill = SavedPassiveSkillData;
-    NewSkill.StackCnt = 1;
+	for (FPassiveItemData& Skill : SkillInventory->PassiveSkillsInv)
+	{
+		if (Skill.Type == SavedPassiveSkillData.Type)
+		{
+			ExistingSkill = &Skill;
+			break;
+		}
+	}
 
-    SkillInventory->PassiveSkillsInv.Add(NewSkill);
-    CurrentStack = NewSkill.StackCnt;
+	//스택 증가 또는 새 스킬 추가 로직 실행
+	if (ExistingSkill)
+	{
+		if (ExistingSkill->StackCnt < ExistingSkill->MaxStackCnt)
+		{
+			ExistingSkill->StackCnt++;
+			CurrentStack = ExistingSkill->StackCnt;
+		}
+		else
+		{
+			CurrentStack = ExistingSkill->StackCnt;
+		}
+	}
+	else
+	{
+		//새 스킬 추가
+		FPassiveItemData NewSkill = SavedPassiveSkillData;
+		NewSkill.StackCnt = 1;
+		SkillInventory->PassiveSkillsInv.Add(NewSkill);
+		CurrentStack = NewSkill.StackCnt;
 
-    UE_LOG(LogTemp, Log, TEXT("New skill '%s' added to inventory. Stack: %d"), *NewSkill.SkillName.ToString(), CurrentStack);
-}
+		UE_LOG(LogTemp, Log, TEXT("Passive Skill inv Added to [%s]! Name: %s, Initial Stack: %d. Inventory Size: %d"),
+			*SkillInventory->GetName(), //컴포넌트 이름 (인벤토리 이름) 추가
+			*NewSkill.SkillName.ToString(),
+			CurrentStack,
+			SkillInventory->PassiveSkillsInv.Num());
+	}
 
-// --- 공격력 적용 ---
-if (SavedPassiveSkillData.Type == EPassiveItemType::AttackPowerBoost)
-{
-    // BaseAttackDamage가 0이면 StatComponent에서 가져오기
-    if (BaseAttackDamage <= 0.0f)
-    {
-        BaseAttackDamage = StatComponent->AttackDamage;
-    }
+	//공격력 적용
+	if (SavedPassiveSkillData.Type == EPassiveItemType::AttackPowerBoost)
+	{
+		float BaseToUse = StaticBaseAttackDamage;
 
-    float NewDamage = BaseAttackDamage * (1.0f + 0.1f * CurrentStack);
-    StatComponent->AttackDamage = NewDamage;
+		//(최대 스택 제한)
+		int32 MaxStackToApply = ExistingSkill ? ExistingSkill->MaxStackCnt : SavedPassiveSkillData.MaxStackCnt;
+		int32 AppliedStack = FMath::Min(CurrentStack, MaxStackToApply);
 
-    UE_LOG(LogTemp, Warning, TEXT("AttackDamage updated: %.1f (Stack: %d)"), StatComponent->AttackDamage, CurrentStack);
-}
+		// 누적 없이 Static 기본 공격력(StaticBaseAttackDamage)을 기준으로 계산
+		StatComponent->AttackDamage = BaseToUse * (1.0f + 0.1f * AppliedStack);
+
+		UE_LOG(LogTemp, Warning, TEXT("AttackDamage updated: %.1f (Static Base: %.1f, AppliedStack: %d)"),
+			StatComponent->AttackDamage, BaseToUse, AppliedStack);
+	}
+
 
     //HUD 갱신
     if (UCommonUserWidget_BattleGameHUD* BattleHUD = GetBattleHUD())
@@ -303,23 +386,4 @@ UCommonUserWidget_BattleGameHUD* UCommonUserWidget_Skill_Slot::GetBattleHUD()
 	return nullptr;
 }
 
-void UCommonUserWidget_Skill_Slot::SetupInitialData()
-{
-	if (APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
-	{
-		if (UCharacterStatsComponent* StatComponent = PlayerCharacter->FindComponentByClass<UCharacterStatsComponent>())
-		{
-			// 캐릭터 스테이트의 데미지 초기값 가져오기
-			BaseAttackDamage = StatComponent->AttackDamage;
-			UE_LOG(LogTemp, Log, TEXT("BaseAttackDamage initialized to: %.1f"), BaseAttackDamage);
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("CharacterStatsComponent NOT found during SetupInitialData."));
-		}
-	}
-	else
-	{
-		UE_LOG(LogTemp, Error, TEXT("PlayerCharacter NOT found during SetupInitialData."));
-	}
-}
+

@@ -7,7 +7,10 @@
 #include "PlayerMade/PlayerCharacter.h"
 #include "GameFramework/DamageType.h"
 #include "Components/CapsuleComponent.h" 
-
+//추가
+#include "Components/ProgressBar.h" 
+#include "Blueprint/UserWidget.h" 
+//끝
 
 
 AAI_Monsters::AAI_Monsters()
@@ -26,6 +29,12 @@ AAI_Monsters::AAI_Monsters()
 	AttackCooldown = 1.5f;
 	AttackDamage = 15.f;
 	LastAttackTime = -1000.0f;
+	//HP 추가
+	HealthBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarComp"));
+	HealthBarComp->SetupAttachment(GetMesh());
+	HealthBarComp->SetRelativeLocation(FVector(0.0f, 0.0f, 300.0f)); // Z축 위치는 예시입니다.
+	HealthBarComp->SetDrawSize(FVector2D(150.0f, 20.0f));
+	//HP 추가 끝
 }
 
 
@@ -48,6 +57,9 @@ void AAI_Monsters::BeginPlay()
 		RangedCtrl->StartChaseLoop();
 		return;
 	}
+	//추가
+	UpdateOverheadHP();
+	//끝
 }
 
 void AAI_Monsters::SetMovementSpeed(float NewSpeed)
@@ -96,6 +108,9 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 
 	CurrentHP = FMath::Clamp(CurrentHP - Applied, 0.f, MaxHP);
 	UE_LOG(LogTemp, Log, TEXT("[Monster] -%.1f HP -> %.1f / %.1f"), Applied, CurrentHP, MaxHP);
+	//추가
+	UpdateOverheadHP();
+	//끝
 
 	if (IsDead())
 	{
@@ -115,4 +130,28 @@ void AAI_Monsters::HandleDeath()
 		Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
+//추가 
+void AAI_Monsters::UpdateOverheadHP()
+{
+	// 위젯 컴포넌트 유효성 검사
+	if (!HealthBarComp) return;
 
+	// 위젯 인스턴스를 가져올 수 있는지 확인 (GetUserWidgetObject는 위젯이 런타임에 생성될 때만 유효합니다)
+	if (UUserWidget* WidgetInstance = HealthBarComp->GetUserWidgetObject())
+	{
+		// 이름이 "HealthBar"인 UProgressBar 찾기
+		if (UProgressBar* HPBar = Cast<UProgressBar>(WidgetInstance->GetWidgetFromName(TEXT("Monster_HP"))))
+		{
+			// HP 비율 계산
+			const float HPPercent = (MaxHP > 0.f) ? CurrentHP / MaxHP : 0.f;
+			HPBar->SetPercent(HPPercent);
+
+			// HP가 낮을 때 색상 변경 필요없을 듯 
+			if (HPPercent < 0.3f)
+			{
+				HPBar->SetFillColorAndOpacity(FLinearColor::Red);
+			}
+		}
+	}
+}
+//끝
