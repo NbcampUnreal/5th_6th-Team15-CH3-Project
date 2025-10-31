@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "AI_Monster/MonsterBullet.h"
 #include "Ranged_MonsterController.generated.h"
 
 class UCapsuleComponent;
@@ -21,6 +22,9 @@ public:
 	void StartChaseLoop();
 	void UpdateChaseLoop();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float AttackRange = 800.f;
+
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UCapsuleComponent* CapsuleComp;
@@ -33,9 +37,6 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Chase")
 	float MoveUpdateInterval = 0.25f;
-
-	UPROPERTY(EditAnywhere, Category = "Combat")
-	float AttackRange = 1000.f;
 
 	UPROPERTY(EditAnywhere, Category = "Combat")
 	float MinKeepDistance = 300.f;
