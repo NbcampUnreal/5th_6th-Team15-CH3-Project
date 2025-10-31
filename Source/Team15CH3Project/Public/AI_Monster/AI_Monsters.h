@@ -5,6 +5,7 @@
 #include "AIController.h"
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BehaviorTree.h"
+#include "AI_Monster/MonsterBullet.h"
 //추가
 #include "Components/WidgetComponent.h"
 //끝
@@ -22,7 +23,7 @@ public:
 	AAI_Monsters();
 
 	bool CanAttack(APawn* Target) const;
-	bool ReangCanAttak(APawn* Traget) const;
+	//bool ReangCanAttak(APawn* Traget) const;
 	void PerformAttack(APawn* Target);
 	void BulletAttack(APawn* Target);
 	bool IsDead() const { return CurrentHP <= 0.f; }
