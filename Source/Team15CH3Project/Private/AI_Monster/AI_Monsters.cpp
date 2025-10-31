@@ -25,6 +25,7 @@ AAI_Monsters::AAI_Monsters()
 	MaxHP = 300.0f;
 	CurrentHP = MaxHP;
 
+	RangeAttackRange = 850;
 	AttackRange = 175.f;
 	AttackCooldown = 1.5f;
 	AttackDamage = 15.f;
@@ -80,6 +81,17 @@ bool AAI_Monsters::CanAttack(APawn* Target) const
 	//UE_LOG(LogTemp, Warning, TEXT("[Attack!!]"));
 }
 
+//bool AAI_Monsters::ReangCanAttak(APawn* Target) const
+//{
+//	if (!Target || IsDead()) return false;
+//	const float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+//	if (Now - LastAttackTime < AttackCooldown) return false;
+//	const float Dist = FVector::Dist2D(GetActorLocation(), Target->GetActorLocation());
+//	return Dist <= RangeAttackRange;
+//	//UE_LOG(LogTemp, Warning, TEXT("[Attack!!]"));
+//}
+
+
 void AAI_Monsters::PerformAttack(APawn* Target)
 {
 	if (!Target || IsDead()) return;
@@ -97,6 +109,46 @@ void AAI_Monsters::PerformAttack(APawn* Target)
 	UE_LOG(LogTemp, Warning, TEXT("[Monster] Attack! Target=%s, Damage=%.1f, Dist=%.0f"), *Target->GetName(), AttackDamage, FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()));
 
 
+}
+
+void AAI_Monsters::BulletAttack(APawn* Target)
+{
+	if (!Target || IsDead()) return;
+
+	if (Bullets)
+	{
+		FVector MuzzleLocation = GetMesh()->GetSocketLocation("MuzzleSocket");
+		FRotator MuzzleRotation = GetMesh()->GetSocketRotation("MuzzleSocket");
+
+		UWorld* world = GetWorld();
+		if (world)
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+			SpawnParams.Instigator = GetInstigator();
+
+			AMonsterBullet* bullet = world->SpawnActor<AMonsterBullet>(Bullets, MuzzleLocation, MuzzleRotation, SpawnParams);
+			if (bullet)
+			{
+				FVector LaunchDirection = MuzzleRotation.Vector();
+				bullet->FireInDirection(LaunchDirection);
+			}
+		}
+
+		LastAttackTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+
+		UGameplayStatics::ApplyDamage(
+			Target,
+			AttackDamage,
+			GetController(),
+			this,
+			UDamageType::StaticClass()
+		);
+
+
+		UE_LOG(LogTemp, Warning, TEXT("[Monster] Attack! Target=%s, Damage=%.1f, Dist=%.0f"), *Target->GetName(), AttackDamage, FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()));
+
+	}
 }
 
 float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,

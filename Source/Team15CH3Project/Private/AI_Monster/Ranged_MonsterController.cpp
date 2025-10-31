@@ -73,33 +73,27 @@ void ARanged_MonsterController::UpdateChaseLoop()
 
 	const float Dist2D = FVector::Dist2D(SelfPawn->GetActorLocation(), PlayerPawnCached->GetActorLocation());
 
-	if (Dist2D < MinKeepDistance)
-	{
-		StopMovement();
-		const FVector ToTarget = PlayerPawnCached->GetActorLocation() - SelfPawn->GetActorLocation();
-		const FRotator LookRot = ToTarget.Rotation();
-		SelfPawn->SetActorRotation(FRotator(0.f, LookRot.Yaw, 0.f));
-		return;
-	}
 
 	if (Dist2D <= AttackRange)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("[Do Not Move]"));
 		StopMovement();
 
 		if (AAI_Monsters* Monster = Cast<AAI_Monsters>(SelfPawn))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("[It's me]"));
 			if (Monster->CanAttack(PlayerPawnCached))
 			{
-				const FVector ToTarget = PlayerPawnCached->GetActorLocation() - Monster->GetActorLocation();
+				/*const FVector ToTarget = PlayerPawnCached->GetActorLocation() - Monster->GetActorLocation();
 				const FRotator LookRot = ToTarget.Rotation();
-				Monster->SetActorRotation(FRotator(0.f, LookRot.Yaw, 0.f));
-
-				Monster->PerformAttack(PlayerPawnCached);
-				//UE_LOG(LogTemp, Warning, TEXT("[RangedMonster] Shoot!"));
+				Monster->SetActorRotation(FRotator(0.f, LookRot.Yaw, 0.f));*/
+				
+				UE_LOG(LogTemp, Warning, TEXT("[RangedMonster] Shoot!"));
+				Monster->BulletAttack(PlayerPawnCached);
 			}
 		}
 		return;
 	}
 
-	MoveToActor(PlayerPawnCached, AcceptanceRadius, true);
+	MoveToActor(PlayerPawnCached, 750.0f, true);
 }
