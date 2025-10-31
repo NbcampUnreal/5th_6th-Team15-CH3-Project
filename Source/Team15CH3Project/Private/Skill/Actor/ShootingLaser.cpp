@@ -1,4 +1,4 @@
-#include "Skill/Actor/NapalmAttack.h"
+#include "Skill/Actor/ShootingLaser.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -9,7 +9,7 @@
 #include "CollisionQueryParams.h" 
 #include "CollisionShape.h"
 
-ANapalmAttack::ANapalmAttack()
+AShootingLaser::AShootingLaser()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -29,46 +29,61 @@ ANapalmAttack::ANapalmAttack()
 	CastingMeshOut->SetupAttachment(CollisionComp);
 
 	// 기본값
-	GrowSpeed = 1.0f;
-	MaxXScale = 5.0f;
-	BaseYScale = 1.0f;
+	GrowSpeed = 1.8f;
+	MaxScale = 5.0f;
+	BaseScale = 1.0f;
 	DamageRadius = 500.f;
 	Damage = 80.f;
-	bExploded = false;
+	bIsLaserShot = false;
 
-	CurrentXScale = 0.1f;
+	CurrentScale = 0.1f;
 }
 
-void ANapalmAttack::BeginPlay()
+void AShootingLaser::BeginPlay()
 {
 	Super::BeginPlay();
 
 	// GroundMesh는 이미 완전한 크기로 표시
-	CastingMeshIn->SetRelativeScale3D(FVector(MaxXScale, BaseYScale, 0.001f));
+	CastingMeshIn->SetRelativeScale3D(FVector(MaxScale, MaxScale, 0.001f));
 
 	// CastingMesh는 작게 시작
-	CastingMeshOut->SetRelativeScale3D(FVector(CurrentXScale, BaseYScale, 0.001f));
-	
+	CastingMeshOut->SetRelativeScale3D(FVector(CurrentScale, CurrentScale, 0.001f));
+
 }
 
-void ANapalmAttack::Tick(float DeltaTime)
+void AShootingLaser::Tick(float DeltaTime)
 {
-	if (bExploded) return;
+	if (bIsLaserShot) return;
 
 	// ?? 점점 커지는 장판 처리
-	CurrentXScale += GrowSpeed * DeltaTime;
-	CastingMeshOut->SetRelativeScale3D(FVector(CurrentXScale, BaseYScale, 0.001f));
+	CurrentScale += GrowSpeed * DeltaTime;
+	CastingMeshOut->SetRelativeScale3D(FVector(CurrentScale, CurrentScale, 0.001f));
+
+	if (bShowDamageRadius)
+	{
+		DrawDebugSphere(
+			GetWorld(),
+			GetActorLocation(),
+			DamageRadius,
+			32,
+			FColor::Red,
+			false,  // 지속시간
+			0.f,    // LifeTime
+			0,      // DepthPriority
+			2.f     // Thickness
+		);
+	}
 
 	// ?? 커지는 장판이 GroundMesh 크기와 같아지면 폭발
-	if (CurrentXScale >= MaxXScale)
+	if (CurrentScale >= MaxScale)
 	{
-		Explode();
+		Shoting();
 	}
 }
 
-void ANapalmAttack::Explode()
+void AShootingLaser::Shoting()
 {
-	bExploded = true;
+	bIsLaserShot = true;
 
 	if (CastingMeshIn)
 		CastingMeshIn->SetVisibility(false);
@@ -79,7 +94,7 @@ void ANapalmAttack::Explode()
 	if (!World) return;
 
 	const FVector Origin = GetActorLocation();
-	
+
 	TArray<AActor*> IgnoreActors;
 	if (APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(World, 0))
 	{
@@ -102,7 +117,7 @@ void ANapalmAttack::Explode()
 	// ?? 랜덤 폭발 이펙트 10개
 	if (ExplosionEffect)
 	{
-		for (int32 i = 0; i < 20; ++i)
+		for (int32 i = 0; i < 50; ++i)
 		{
 			float Delay = FMath::RandRange(0.1f, 0.5f);
 			FTimerHandle TimerHandle;

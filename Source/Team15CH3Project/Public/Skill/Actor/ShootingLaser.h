@@ -2,18 +2,17 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "NapalmAttack.generated.h"
+#include "ShootingLaser.generated.h"
 
 class USphereComponent;
 
 UCLASS()
-class TEAM15CH3PROJECT_API ANapalmAttack : public AActor
+class TEAM15CH3PROJECT_API AShootingLaser : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	ANapalmAttack();
-
+	AShootingLaser();
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -31,21 +30,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NapalmAttack")
 	UStaticMeshComponent* CastingMeshOut;
 
-
-
-	// 스케일 관련
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	float GrowSpeed;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
-	float MaxXScale;
+	float MaxScale;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
-	float BaseYScale;
+	float BaseScale;
 
-	float CurrentXScale;
+	float CurrentScale;
 
-	// 폭발 관련
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	float DamageRadius;
 
@@ -75,7 +70,10 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	UParticleSystem* ExplosionEffect;
 
-	bool bExploded = false;
+	bool bShowDamageRadius = true;
 
-	void Explode();
+	bool bIsLaserShot = false;
+
+	void Shoting();
+
 };
