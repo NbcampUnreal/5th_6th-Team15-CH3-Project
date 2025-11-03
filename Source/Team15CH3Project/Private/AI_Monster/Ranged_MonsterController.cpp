@@ -82,7 +82,7 @@ void ARanged_MonsterController::UpdateChaseLoop()
 		if (AAI_Monsters* Monster = Cast<AAI_Monsters>(SelfPawn))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("[It's me]"));
-			if (Monster->CanAttack(PlayerPawnCached))
+			if (Monster->ReangCanAttak(PlayerPawnCached))
 			{
 				/*const FVector ToTarget = PlayerPawnCached->GetActorLocation() - Monster->GetActorLocation();
 				const FRotator LookRot = ToTarget.Rotation();
