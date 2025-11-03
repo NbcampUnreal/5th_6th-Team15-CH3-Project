@@ -13,22 +13,19 @@ ANapalmAttack::ANapalmAttack()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// 루트
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	SetRootComponent(SceneRoot);
 
 	CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComp"));
 	CollisionComp->SetupAttachment(SceneRoot);
 	CollisionComp->InitSphereRadius(0.1f);
-	// ?? 고정된 장판 (기본 영역 표시)
+
 	CastingMeshIn = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundMesh"));
 	CastingMeshIn->SetupAttachment(CollisionComp);
 
-	// ?? 점점 커지는 장판 (캐스팅 시 시각적 연출)
 	CastingMeshOut = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CastingMesh"));
 	CastingMeshOut->SetupAttachment(CollisionComp);
 
-	// 기본값
 	GrowSpeed = 1.0f;
 	MaxXScale = 5.0f;
 	BaseYScale = 1.0f;
@@ -43,23 +40,17 @@ void ANapalmAttack::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// GroundMesh는 이미 완전한 크기로 표시
 	CastingMeshIn->SetRelativeScale3D(FVector(MaxXScale, BaseYScale, 0.001f));
-
-	// CastingMesh는 작게 시작
 	CastingMeshOut->SetRelativeScale3D(FVector(CurrentXScale, BaseYScale, 0.001f));
-	
 }
 
 void ANapalmAttack::Tick(float DeltaTime)
 {
 	if (bExploded) return;
 
-	// ?? 점점 커지는 장판 처리
-	CurrentXScale += GrowSpeed * DeltaTime;
+	CurrentXScale += GrowSpeed * DeltaTime; // 장판 캐스팅
 	CastingMeshOut->SetRelativeScale3D(FVector(CurrentXScale, BaseYScale, 0.001f));
 
-	// ?? 커지는 장판이 GroundMesh 크기와 같아지면 폭발
 	if (CurrentXScale >= MaxXScale)
 	{
 		Explode();
@@ -86,27 +77,26 @@ void ANapalmAttack::Explode()
 		IgnoreActors.Add(PlayerPawn);
 	}
 
-	// ?? 원형 범위 데미지 적용
 	UGameplayStatics::ApplyRadialDamage(
 		World,
 		Damage,
 		Origin,
 		DamageRadius,
 		UDamageType::StaticClass(),
-		IgnoreActors, // 제외할 액터 없음
+		IgnoreActors,
 		this,
 		GetInstigatorController(),
 		true
 	);
 
-	// ?? 랜덤 폭발 이펙트 10개
+
 	if (ExplosionEffect)
 	{
-		for (int32 i = 0; i < 20; ++i)
+		for (int32 i = 0; i < 20; ++i) // 파티클 생성 갯수
 		{
 			float Delay = FMath::RandRange(0.1f, 0.5f);
 			FTimerHandle TimerHandle;
-			ExplosionTimers.Add(TimerHandle); // 핸들 유지
+			ExplosionTimers.Add(TimerHandle);
 
 			World->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this, World]()
 				{
@@ -117,7 +107,7 @@ void ANapalmAttack::Explode()
 
 					FVector SpawnPos = GetActorLocation() + FVector(FMath::Cos(FMath::DegreesToRadians(Angle)) * Radius,
 						FMath::Sin(FMath::DegreesToRadians(Angle)) * Radius,
-						50.f); // 높이 고정
+						50.f);
 
 					UGameplayStatics::SpawnEmitterAtLocation(World, ExplosionEffect, SpawnPos);
 

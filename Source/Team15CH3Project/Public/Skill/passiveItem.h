@@ -43,6 +43,9 @@ struct FPassiveItemData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PassiveSkill")
 	int32 MaxStackCnt;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PassiveSkill")
+	int32 CoolTime;
+
 };
 
 UCLASS()

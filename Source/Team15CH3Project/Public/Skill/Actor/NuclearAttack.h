@@ -2,33 +2,29 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "NapalmAttack.generated.h"
-
-class USphereComponent;
+#include "NuclearAttack.generated.h"
 
 UCLASS()
-class TEAM15CH3PROJECT_API ANapalmAttack : public AActor
+class TEAM15CH3PROJECT_API ANuclearAttack : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
-	ANapalmAttack();
+	ANuclearAttack();
 
-protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
-	// 구성요소
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NapalmAttack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NuclearAttack")
 	USceneComponent* SceneRoot;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NapalmAttack")
-	USphereComponent* CollisionComp;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NuclearAttack")
+	UStaticMeshComponent* DroneMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NapalmAttack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NuclearAttack")
 	UStaticMeshComponent* CastingMeshIn;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NapalmAttack")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NuclearAttack")
 	UStaticMeshComponent* CastingMeshOut;
 
 	UPROPERTY(EditAnywhere, Category = "Skill")
@@ -42,7 +38,6 @@ protected:
 
 	float CurrentXScale;
 
-	// 폭발 관련
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	float DamageRadius;
 
@@ -72,7 +67,28 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	UParticleSystem* ExplosionEffect;
 
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	float MoveSpeed = 1200.f;
+
+	bool bIsMoving = true;
+
+	FVector TargetLocation;
+
+	UPROPERTY(EditAnywhere, Category = "Movement")
+	FVector MoveDirection = FVector::ForwardVector;
+	void StartMoving();
+	void StopMoving();
+
+	// 살짝 진자운동 시켜줄 변수
+	float TimeAccumulator;   
+	float HoverSpeed;        
+	float HoverAmplitude;
+
 	bool bExploded = false;
 
+	bool bShowDamageRadius = true;
+
 	void Explode();
+
 };

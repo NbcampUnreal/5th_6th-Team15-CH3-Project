@@ -13,22 +13,19 @@ AShootingLaser::AShootingLaser()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	// 루트
 	SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
 	SetRootComponent(SceneRoot);
 
 	CollisionComp = CreateDefaultSubobject<USphereComponent>(TEXT("CollisionComp"));
 	CollisionComp->SetupAttachment(SceneRoot);
 	CollisionComp->InitSphereRadius(0.1f);
-	// ?? 고정된 장판 (기본 영역 표시)
+
 	CastingMeshIn = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GroundMesh"));
 	CastingMeshIn->SetupAttachment(CollisionComp);
 
-	// ?? 점점 커지는 장판 (캐스팅 시 시각적 연출)
 	CastingMeshOut = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("CastingMesh"));
 	CastingMeshOut->SetupAttachment(CollisionComp);
 
-	// 기본값
 	GrowSpeed = 1.8f;
 	MaxScale = 5.0f;
 	BaseScale = 1.0f;
@@ -43,19 +40,14 @@ void AShootingLaser::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// GroundMesh는 이미 완전한 크기로 표시
 	CastingMeshIn->SetRelativeScale3D(FVector(MaxScale, MaxScale, 0.001f));
-
-	// CastingMesh는 작게 시작
 	CastingMeshOut->SetRelativeScale3D(FVector(CurrentScale, CurrentScale, 0.001f));
-
 }
 
 void AShootingLaser::Tick(float DeltaTime)
 {
 	if (bIsLaserShot) return;
 
-	// ?? 점점 커지는 장판 처리
 	CurrentScale += GrowSpeed * DeltaTime;
 	CastingMeshOut->SetRelativeScale3D(FVector(CurrentScale, CurrentScale, 0.001f));
 
@@ -74,7 +66,6 @@ void AShootingLaser::Tick(float DeltaTime)
 		);
 	}
 
-	// ?? 커지는 장판이 GroundMesh 크기와 같아지면 폭발
 	if (CurrentScale >= MaxScale)
 	{
 		Shoting();
@@ -101,27 +92,25 @@ void AShootingLaser::Shoting()
 		IgnoreActors.Add(PlayerPawn);
 	}
 
-	// ?? 원형 범위 데미지 적용
 	UGameplayStatics::ApplyRadialDamage(
 		World,
 		Damage,
 		Origin,
 		DamageRadius,
 		UDamageType::StaticClass(),
-		IgnoreActors, // 제외할 액터 없음
+		IgnoreActors,
 		this,
 		GetInstigatorController(),
 		true
 	);
 
-	// ?? 랜덤 폭발 이펙트 10개
 	if (ExplosionEffect)
 	{
 		for (int32 i = 0; i < 50; ++i)
 		{
 			float Delay = FMath::RandRange(0.1f, 0.5f);
 			FTimerHandle TimerHandle;
-			ExplosionTimers.Add(TimerHandle); // 핸들 유지
+			ExplosionTimers.Add(TimerHandle); 
 
 			World->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this, World]()
 				{
@@ -132,7 +121,7 @@ void AShootingLaser::Shoting()
 
 					FVector SpawnPos = GetActorLocation() + FVector(FMath::Cos(FMath::DegreesToRadians(Angle)) * Radius,
 						FMath::Sin(FMath::DegreesToRadians(Angle)) * Radius,
-						50.f); // 높이 고정
+						50.f); 
 
 					UGameplayStatics::SpawnEmitterAtLocation(World, ExplosionEffect, SpawnPos);
 
