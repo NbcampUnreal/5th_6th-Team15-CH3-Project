@@ -89,5 +89,43 @@ public:
     //초기화
     UFUNCTION(BlueprintCallable)
     void InitHUD();
+    
+
+    //타이머
+    UPROPERTY(meta = (BindWidget))
+    class UTextBlock* CurrentTime;
+
+    UPROPERTY(VisibleAnywhere, Category = "Game Time")
+    float GameTimeElapsed = 0.0f;
+
+
+
+
+
+
+
+
+
+
+
+private:
+
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<class UUserWidget> DefeatWidgetClass;
+
+    bool bIsDefeatUIShown = false;
+
+    TArray<FString> DefeatQuotes = {
+        TEXT("The stars say nothing; they merely shine."),
+        TEXT("The universe is vast, but meaning is always made by humans."),
+        TEXT("A signal came in the silence, and then nothing happened."),
+        TEXT("Life is not a calculation, but the end was always precise."),
+        TEXT("An old satellite is still repeatedly transmitting a 'return home' signal."),
+        TEXT("We found God, but it was just an ancient algorithm."),
+        TEXT("The Earth is gone, and we still call out names."),
+        TEXT("Even in a vacuum, memory remains. It is the only evidence of life."),
+        TEXT("Time is not a straight line; only we believe it to be."),
+        TEXT("The last human looked at the stars and powered down.")
+    };
 
 };
