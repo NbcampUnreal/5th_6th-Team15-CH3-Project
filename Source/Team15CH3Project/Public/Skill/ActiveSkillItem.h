@@ -54,7 +54,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	FActiveSkillItemData ActiveSkillData;
 
-protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	EActiveSkillItemType ActiveType;
 };

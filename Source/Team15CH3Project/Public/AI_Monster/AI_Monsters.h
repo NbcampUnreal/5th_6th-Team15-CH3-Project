@@ -6,6 +6,9 @@
 #include "Perception/AIPerceptionTypes.h"
 #include "BehaviorTree/BehaviorTree.h"
 #include "AI_Monster/MonsterBullet.h"
+//Ï∂îÍ∞Ä
+#include "Components/WidgetComponent.h"
+//ÎÅù
 #include "AI_Monsters.generated.h"
 
 class UCapsuleComponent;
@@ -20,16 +23,21 @@ public:
 	AAI_Monsters();
 
 	bool CanAttack(APawn* Target) const;
-	bool ReangCanAttak(APawn* Traget) const;
+	//bool ReangCanAttak(APawn* Traget) const;
 	void PerformAttack(APawn* Target);
 	void BulletAttack(APawn* Target);
 	bool IsDead() const { return CurrentHP <= 0.f; }
 
 	UPROPERTY(EditAnyWhere, Category = "AI")
-	float WalkSpeed = 400.0f; // AI ∏ÛΩ∫≈Õ º”µµ∞™¿ª ¡§«ÿ¡÷¥¬ ±‚¥….
+	float WalkSpeed = 400.0f; // AI Î™¨Ïä§ÌÑ∞ ÏÜçÎèÑÍ∞íÏùÑ Ï†ïÌï¥Ï£ºÎäî Í∏∞Îä•.
 
 	UPROPERTY(EditAnyWhere, Category = "AI")
 	float RunSpeed = 500.0f;
+	//Ï∂îÍ∞Ä
+	void UpdateOverheadHP();
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HPUI")
+	class UWidgetComponent* HealthBarComp;
+	//ÎÅù
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fire")
 	TSubclassOf<AMonsterBullet> Bullets;
