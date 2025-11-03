@@ -10,7 +10,7 @@
 #include "PlayerMade/CharacterStatsComponent.h"
 #include "PlayerMade/AutoAttackComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "PlayerMade/AutoAttackComponent.h" 
+#include "PlayerMade/AutoAttackComponent.h"
 #include "Animation/AnimMontage.h"
 
 // Sets default values
@@ -35,6 +35,10 @@ APlayerCharacter::APlayerCharacter()
 	StatsComponent = CreateDefaultSubobject<UCharacterStatsComponent>(TEXT("StatsComponent"));
 
 	AutoAttackComponent = CreateDefaultSubobject<UAutoAttackComponent>(TEXT("AutoAttack"));
+
+	SkillInventory = CreateDefaultSubobject<USkillInventoryComponent>(TEXT("SkillInventory"));
+
+	SkillUseIndicator = CreateDefaultSubobject<USkillUseIndicatorComponent>(TEXT("SkillUseIndicator"));
 
 	// === 2. 이동 및 회전 설정 ===
 	bUseControllerRotationYaw = false;
@@ -88,6 +92,22 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		if (MoveAction)
 		{
 			EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
+		}
+		if (SkillQAction)
+		{
+			EnhancedInputComponent->BindAction(SkillQAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillQ);
+		}
+		if (SkillEAction)
+		{
+			EnhancedInputComponent->BindAction(SkillEAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillE);
+		}
+		if (SkillRAction)
+		{
+			EnhancedInputComponent->BindAction(SkillRAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillR);
+		}
+		if (UltimateCAction)
+		{
+			EnhancedInputComponent->BindAction(UltimateCAction, ETriggerEvent::Started, this, &APlayerCharacter::UltimateC);
 		}
 	}
 }
@@ -163,6 +183,7 @@ float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& Damag
 void APlayerCharacter::PlayerIsDead()
 {
 	UE_LOG(LogTemp, Error, TEXT("PLAYER IS DEAD! Deactivating input and collision."));
+	Dead = true;
 
 	if (DeathMontage && GetMesh() && GetMesh()->GetAnimInstance())
 	{
@@ -187,6 +208,33 @@ void APlayerCharacter::PlayerIsDead()
 		AutoAttackComponent->StopAutoAttack();
 	}
 
-	// 5초 후에 액터를 제거하는 로직을 추가합니다. 
-	SetLifeSpan(5.0f);
+
+	// 이 로직이 있어야 몬스터가 5초 동안 유효 타겟으로 인식하는 것을 막을 수 있습니다.
+	// SetLifeSpan(5.0f);
 }
+
+// 스킬 콜백 함수 구현
+void APlayerCharacter::SkillQ()
+{
+	// 스킬 Q 로직
+	UE_LOG(LogTemp, Warning, TEXT("Skill Q activated!"));
+}
+
+void APlayerCharacter::SkillE()
+{
+	// 스킬 E 로직
+	UE_LOG(LogTemp, Warning, TEXT("Skill E activated!"));
+}
+
+void APlayerCharacter::SkillR()
+{
+	// 스킬 R 로직
+	UE_LOG(LogTemp, Warning, TEXT("Skill R activated!"));
+}
+
+void APlayerCharacter::UltimateC()
+{
+	// 궁극기 C 로직
+	UE_LOG(LogTemp, Warning, TEXT("Ultimate C activated!"));
+}
+// ------------------------------------

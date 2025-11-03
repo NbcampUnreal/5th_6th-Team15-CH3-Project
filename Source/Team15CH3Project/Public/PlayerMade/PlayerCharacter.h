@@ -15,6 +15,8 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 class UAnimMontage;
+class USkillInventoryComponent;
+class USkillUseIndicatorComponent;
 
 UCLASS()
 class TEAM15CH3PROJECT_API APlayerCharacter : public ACharacter
@@ -25,6 +27,10 @@ public:
 	APlayerCharacter();
 
 	virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "State")
+	bool Dead = false;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
@@ -39,11 +45,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UCharacterStatsComponent* StatsComponent;
 
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	//* SkillInventory;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USkillInventoryComponent* SkillInventory;
 
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	//* SkillUseIndicator;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	USkillUseIndicatorComponent* SkillUseIndicator;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
@@ -51,6 +57,20 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	UInputAction* MoveAction;
+
+	// 스킬 인풋 액션 선언부
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Skills")
+	class UInputAction* SkillQAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Skills")
+	class UInputAction* SkillEAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Skills")
+	class UInputAction* SkillRAction;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Skills")
+	class UInputAction* UltimateCAction;
+	// ------------------------------------
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	class UAnimMontage* DeathMontage;
@@ -62,4 +82,11 @@ protected:
 	void Move(const FInputActionValue& Value);
 
 	void PlayerIsDead();
+
+	// 스킬 콜백 함수 선언부
+	void SkillQ();
+	void SkillE();
+	void SkillR();
+	void UltimateC();
+	// ------------------------------------
 };
