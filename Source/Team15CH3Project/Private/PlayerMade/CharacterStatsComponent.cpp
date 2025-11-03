@@ -89,28 +89,26 @@ void UCharacterStatsComponent::LevelUp()
     }
 }
 
-// 💡 [추가] 레벨 업 스탯 적용 함수 구현
+// 레벨 업 스탯 적용 함수 구현
 void UCharacterStatsComponent::ApplyLevelUpStats()
 {
-    // 레벨 업에 따른 스탯 증가 로직 (예시)
+    //// 1. MaxHP 증가 및 HP 회복
+    //MaxHP += 10.0f;
+    //CurrentHP = MaxHP; // 레벨업 시 체력 완전 회복
 
-    // 1. MaxHP 증가 및 HP 회복
-    MaxHP += 10.0f;
-    CurrentHP = MaxHP; // 레벨업 시 체력 완전 회복
+    //// 2. 공격력, 이동 속도 등 증가
+    //AttackDamage += 2.0f;
+    //MoveSpeed += 20.0f;
 
-    // 2. 공격력, 이동 속도 등 증가
-    AttackDamage += 2.0f;
-    MoveSpeed += 20.0f;
-
-    // 3. 이동 속도 변경을 CharacterMovementComponent에 적용
-    if (AActor* OwnerActor = GetOwner())
-    {
-        if (ACharacter* Char = Cast<ACharacter>(OwnerActor))
-        {
-            if (UCharacterMovementComponent* MovementComp = Char->GetCharacterMovement())
-            {
-                MovementComp->MaxWalkSpeed = MoveSpeed;
-            }
-        }
-    }
+    //// 3. 이동 속도 변경을 CharacterMovementComponent에 적용
+    //if (AActor* OwnerActor = GetOwner())
+    //{
+    //    if (ACharacter* Char = Cast<ACharacter>(OwnerActor))
+    //    {
+    //        if (UCharacterMovementComponent* MovementComp = Char->GetCharacterMovement())
+    //        {
+    //            MovementComp->MaxWalkSpeed = MoveSpeed;
+    //        }
+    //    }
+    //}
 }
