@@ -1,6 +1,9 @@
 #include "Skill/passiveItem.h"
 #include "PlayerMade/CharacterStatsComponent.h"
 #include "PlayerMade/PlayerCharacter.h"
+#include "Skill/Actor/Drone.h"
+#include "Kismet/GameplayStatics.h"
+
 ApassiveItem::ApassiveItem()
 {
 	PassiveSkillData.StackCnt = 0;
@@ -31,58 +34,76 @@ void ApassiveItem::PassiveSkillApply(APlayerCharacter* Target)
 		PassiveSkillData.StackCnt++;
 	}
 
-	const float BaseDamage = 10.0f;
-	const float BaseAttackSpeed = 10.0f;
-	const float BaseMaxHP = 10.0f;
-	const float BaseMaxMP = 10.0f;
-	const float BaseExp = 10.0f;
-	const float BaseMoveSpeed = 10.0f;
-	const float BaseCurrentHP = 10.0f;
-
+	const float Multiplier = 1.0f + (PassiveSkillData.PercentStack / 100.0f) * PassiveSkillData.StackCnt;
 
 	switch (PassiveType) // 스탯 계산 수식 다시 정립 필요
 	{
 	case EPassiveItemType::AttackPowerBoost:
-		Stats->AttackDamage = BaseDamage * (1.0f + 0.1f * PassiveSkillData.StackCnt);
-
+		Stats->AttackDamage *= Multiplier;
 		break;
 	case EPassiveItemType::AttackSpeedBoost:
-		Stats->AttackSpeed = BaseAttackSpeed * (1.0f + 0.1f * PassiveSkillData.StackCnt);
+		Stats->AttackSpeed *= Multiplier;
 
 		break;
 	case EPassiveItemType::AttackIncreasingDirection:
-		Stats->ProjectileCount = Stats->ProjectileCount++;
+		Stats->ProjectileCount += 1;
 		break;
 	case EPassiveItemType::BulletBoost:
 
 		break;
 	case EPassiveItemType::HPBoost: //최대 HP 증가 효과
-		Stats->MaxHP = BaseMaxHP * (1.0f + 0.1f * PassiveSkillData.StackCnt);
+		Stats->MaxHP *= Multiplier;
 
 		break;
 	case EPassiveItemType::MPBoost: //최대 MP 증가 효과
-		Stats->MaxMP = BaseMaxMP * (1.0f + 0.1f * PassiveSkillData.StackCnt);
-		
+		Stats->MaxMP *= Multiplier;
+
 		break;
 	case EPassiveItemType::ExpBoost: //경험치 획득량 증가 적AI 에서 받아올게 필요
-		
+
 
 		break;
 	case EPassiveItemType::SprintBoost:
-		Stats->MoveSpeed = BaseMoveSpeed * (1.0f + 0.1f * PassiveSkillData.StackCnt);
+		Stats->MoveSpeed *= Multiplier;
 
- 		break;
-	case EPassiveItemType::BloodAbsorbing: //현재 체력을 흡혈 효과로 회복하는 패시브(적AI 에서 받아올게 필요)
-		Stats->CurrentHP;
+		break;
+	case EPassiveItemType::BloodAbsorbing: //현재 체력을 흡혈 효과로 회복하는 패시브
+		// 여기서는 스킬 획득 판정만 하고 직접적인 스킬 효과는 몬스터가 죽을때 제공
 
 		break;
 	case EPassiveItemType::AutomaticAttackDrone:
+	{
+		if (!DroneClass) break;
 
+		UWorld* World = GetWorld();
+		if (!World) break;
+
+		int32 MaxDrone = 5;
+
+		TArray<AActor*> ExistingDrones;
+		UGameplayStatics::GetAllActorsOfClass(World, DroneClass, ExistingDrones);
+		int32 DronesToSpawn = FMath::Clamp(PassiveSkillData.StackCnt - ExistingDrones.Num(), 0, MaxDrone);
+
+		for (int32 i = 0; i < DronesToSpawn; ++i)
+		{
+			FVector SpawnLoc = GetActorLocation();
+			FRotator SpawnRot = FRotator::ZeroRotator;
+
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this; // 스킬 소유자
+			SpawnParams.Instigator = Cast<APawn>(GetOwner());
+
+			ADrone* NewDrone = World->SpawnActor<ADrone>(DroneClass, SpawnLoc, SpawnRot, SpawnParams);
+			if (NewDrone)
+			{
+				NewDrone->SetOrbitTarget(this);
+			}
+		}
 		break;
+	}
 	default:
 		break;
 	}
-
 	UE_LOG(LogTemp, Warning, TEXT("[PassiveSkill] %s 획득 스택: %d"),
 		*PassiveSkillData.SkillName.ToString(), PassiveSkillData.StackCnt);
 
