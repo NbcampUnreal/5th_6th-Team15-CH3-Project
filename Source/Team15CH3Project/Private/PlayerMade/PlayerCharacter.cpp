@@ -187,6 +187,6 @@ void APlayerCharacter::PlayerIsDead()
 		AutoAttackComponent->StopAutoAttack();
 	}
 
-	// 5초 후에 액터를 제거하는 로직을 추가합니다. 
-	SetLifeSpan(5.0f);
+	// 5초 후에 액터를 제거하는 로직을 추가
+	//SetLifeSpan(5.0f);
 }
