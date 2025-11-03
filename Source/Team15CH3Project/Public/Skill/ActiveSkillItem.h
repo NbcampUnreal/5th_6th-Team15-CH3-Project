@@ -35,6 +35,12 @@ struct FActiveSkillItemData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	int32 StackCnt;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActiveSkillItem")
+	int32 MaxStackCnt;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActiveSkillItem")
+	int32 CoolTime;
 };
 
 UCLASS()
