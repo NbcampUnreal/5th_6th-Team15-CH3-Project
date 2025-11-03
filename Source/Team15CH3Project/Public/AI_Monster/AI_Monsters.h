@@ -23,7 +23,7 @@ public:
 	AAI_Monsters();
 
 	bool CanAttack(APawn* Target) const;
-	//bool ReangCanAttak(APawn* Traget) const;
+	bool ReangCanAttak(APawn* Traget) const;
 	void PerformAttack(APawn* Target);
 	void BulletAttack(APawn* Target);
 	bool IsDead() const { return CurrentHP <= 0.f; }
@@ -38,6 +38,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "HPUI")
 	class UWidgetComponent* HealthBarComp;
 	//끝
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward") //몬스터가 죽었을때 드랍하는 경험치 양
+	int32 ExpReward = 20;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fire")
 	TSubclassOf<AMonsterBullet> Bullets;

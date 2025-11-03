@@ -6,6 +6,7 @@
 #include "GameFramework/Controller.h"
 #include "PlayerMade/PlayerCharacter.h"
 #include "GameFramework/DamageType.h"
+#include "Skill/SkillInventoryComponent.h"
 #include "Components/CapsuleComponent.h" 
 //추가
 #include "Components/ProgressBar.h" 
@@ -81,15 +82,15 @@ bool AAI_Monsters::CanAttack(APawn* Target) const
 	//UE_LOG(LogTemp, Warning, TEXT("[Attack!!]"));
 }
 
-//bool AAI_Monsters::ReangCanAttak(APawn* Target) const
-//{
-//	if (!Target || IsDead()) return false;
-//	const float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
-//	if (Now - LastAttackTime < AttackCooldown) return false;
-//	const float Dist = FVector::Dist2D(GetActorLocation(), Target->GetActorLocation());
-//	return Dist <= RangeAttackRange;
-//	//UE_LOG(LogTemp, Warning, TEXT("[Attack!!]"));
-//}
+bool AAI_Monsters::ReangCanAttak(APawn* Target) const
+{
+	if (!Target || IsDead()) return false;
+	const float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
+	if (Now - LastAttackTime < AttackCooldown) return false;
+	const float Dist = FVector::Dist2D(GetActorLocation(), Target->GetActorLocation());
+	return Dist <= RangeAttackRange;
+	//UE_LOG(LogTemp, Warning, TEXT("[Attack!!]"));
+}
 
 
 void AAI_Monsters::PerformAttack(APawn* Target)
@@ -117,8 +118,7 @@ void AAI_Monsters::BulletAttack(APawn* Target)
 
 	if (Bullets)
 	{
-		FVector MuzzleLocation = GetMesh()->GetSocketLocation("MuzzleSocket");
-		FRotator MuzzleRotation = GetMesh()->GetSocketRotation("MuzzleSocket");
+		FVector MuzzleLocation = GetMesh()->GetSocketLocation("FireMuzzle");
 
 		UWorld* world = GetWorld();
 		if (world)
@@ -127,11 +127,14 @@ void AAI_Monsters::BulletAttack(APawn* Target)
 			SpawnParams.Owner = this;
 			SpawnParams.Instigator = GetInstigator();
 
+			FVector TargetLoc = Target->GetActorLocation() + FVector(0, 0, 50.0f); // 약간 상체 쪽을 향하게
+			FVector Direction = (TargetLoc - MuzzleLocation).GetSafeNormal();
+			FRotator MuzzleRotation = Direction.Rotation();
+
 			AMonsterBullet* bullet = world->SpawnActor<AMonsterBullet>(Bullets, MuzzleLocation, MuzzleRotation, SpawnParams);
 			if (bullet)
 			{
-				FVector LaunchDirection = MuzzleRotation.Vector();
-				bullet->FireInDirection(LaunchDirection);
+				bullet->FireInDirection(Direction);
 			}
 		}
 
@@ -166,9 +169,37 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 
 	if (IsDead())
 	{
-		// 캐릭터 스테이터스에 접근해서 경험치를 제공하는 기능 추가해야함
+
+		/*if (UWorld* World = GetWorld())
+		{
+			if (APlayerCharacter* PC = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
+			{
+				PC->AddExp(ExpReward);
+				UE_LOG(LogTemp, Warning, TEXT("[Monster] Player0에게 경험치 %d 지급"), ExpReward);
+			}
+		}*/
+
 		HandleDeath();
 		SetLifeSpan(3.0f);
+
+		///// 캐릭터 흡혈 패시브 스킬
+		if (DamageCauser)
+		{
+			if (APlayerCharacter* Player = Cast<APlayerCharacter>(DamageCauser))
+			{
+				if (USkillInventoryComponent* SkillInv = Player->FindComponentByClass<USkillInventoryComponent>())
+				{
+					if (SkillInv->HasPassiveSkill(EPassiveItemType::BloodAbsorbing))
+					{
+						if (UCharacterStatsComponent* Stats = Player->FindComponentByClass<UCharacterStatsComponent>())
+						{
+							const float HealAmount = Stats->MaxHP * 0.05f;
+							Stats->CurrentHP = FMath::Clamp(Stats->CurrentHP + HealAmount, 0.f, Stats->MaxHP);
+						}
+					}
+				}
+			}
+		}
 	}
 	return Applied;
 }
