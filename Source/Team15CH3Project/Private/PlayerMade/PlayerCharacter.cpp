@@ -36,6 +36,10 @@ APlayerCharacter::APlayerCharacter()
 
 	AutoAttackComponent = CreateDefaultSubobject<UAutoAttackComponent>(TEXT("AutoAttack"));
 
+	SkillInventory = CreateDefaultSubobject<USkillInventoryComponent>(TEXT("SkillInventory"));
+
+	SkillUseIndicator = CreateDefaultSubobject<USkillUseIndicatorComponent>(TEXT("SkillUseIndicator"));
+
 	// === 2. 이동 및 회전 설정 ===
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
