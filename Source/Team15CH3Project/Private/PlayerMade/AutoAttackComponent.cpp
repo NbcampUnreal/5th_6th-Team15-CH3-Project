@@ -91,6 +91,19 @@ APawn* UAutoAttackComponent::FindTarget() const
         {
             if (APawn* Pawn = Cast<APawn>(Actor))
             {
+                const UCharacterStatsComponent* EnemyStats = Pawn->FindComponentByClass<UCharacterStatsComponent>();
+                if (EnemyStats)
+                {
+                    if (EnemyStats->IsDead() || EnemyStats->CurrentHP <= 0.0f)
+                    {
+                        continue;
+                    }
+                }
+                if (!Pawn->IsValidLowLevel() || Pawn->IsPendingKillPending())
+                {
+                    continue;
+                }
+
                 float DistSq = FVector::DistSquared(OwnerLocation, Pawn->GetActorLocation());
 
                 if (DistSq <= ClosestDistSq)
@@ -127,6 +140,31 @@ void UAutoAttackComponent::FireProjectile()
     if (!World) return;
 
     APawn* Target = FindTarget();
+
+    // ===========================================================
+    // ★ Added : 타겟 유효성 재검사 (죽은 적, 파괴 중인 액터 모두 무시)
+    // ===========================================================
+    if (Target)
+    {
+        const UCharacterStatsComponent* EnemyStats = Target->FindComponentByClass<UCharacterStatsComponent>();
+        if (!Target->IsValidLowLevel() || Target->IsPendingKillPending())
+        {
+            return;
+        }
+        if (EnemyStats)
+        {
+            if (EnemyStats->IsDead() || EnemyStats->CurrentHP <= 0.0f)
+            {
+                return;
+            }
+        }
+    }
+    else
+    {
+        return; // 타겟 없음
+    }
+    // ===========================================================
+
     FRotator BaseRotation = GetFireRotation(Target);
     int32 Count = StatsComponent->ProjectileCount; // 1. 스탯에서 Count를 가져옵니다.
     FVector SpawnLocation = GetOwner()->GetActorLocation() + FVector(0, 0, 50.0f);
