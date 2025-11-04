@@ -141,9 +141,6 @@ void UAutoAttackComponent::FireProjectile()
 
     APawn* Target = FindTarget();
 
-    // ===========================================================
-    // ★ Added : 타겟 유효성 재검사 (죽은 적, 파괴 중인 액터 모두 무시)
-    // ===========================================================
     if (Target)
     {
         const UCharacterStatsComponent* EnemyStats = Target->FindComponentByClass<UCharacterStatsComponent>();
@@ -163,7 +160,6 @@ void UAutoAttackComponent::FireProjectile()
     {
         return; // 타겟 없음
     }
-    // ===========================================================
 
     FRotator BaseRotation = GetFireRotation(Target);
     int32 Count = StatsComponent->ProjectileCount; // 1. 스탯에서 Count를 가져옵니다.
@@ -182,10 +178,10 @@ void UAutoAttackComponent::FireProjectile()
             float CurrentAngle = -HalfAngle + (i * SpreadAngle);
             FinalRotation.Yaw += CurrentAngle;
         }
-
+        APlayerCharacter* OwnerChar = Cast<APlayerCharacter>(GetOwner());
         FActorSpawnParameters Params;
-        Params.Owner = GetOwner();
-        Params.Instigator = GetOwner()->GetInstigator();
+        Params.Owner = OwnerChar;          
+        Params.Instigator = OwnerChar;
 
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn; // 최초생성 충돌 방지용
 

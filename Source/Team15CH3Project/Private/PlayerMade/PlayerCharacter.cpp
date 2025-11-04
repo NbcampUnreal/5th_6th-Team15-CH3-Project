@@ -12,6 +12,8 @@
 #include "Components/CapsuleComponent.h"
 #include "PlayerMade/AutoAttackComponent.h"
 #include "Animation/AnimMontage.h"
+#include "Skill/SkillInventoryComponent.h"
+#include "Skill/SkillUseIndicatorComponent.h"
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -208,9 +210,18 @@ void APlayerCharacter::PlayerIsDead()
 		AutoAttackComponent->StopAutoAttack();
 	}
 
+}
 
-	// 이 로직이 있어야 몬스터가 5초 동안 유효 타겟으로 인식하는 것을 막을 수 있습니다.
-	// SetLifeSpan(5.0f);
+void APlayerCharacter::AddExp(int32 Amount)
+{
+	if (UCharacterStatsComponent* Stats = FindComponentByClass<UCharacterStatsComponent>())
+	{
+		Stats->GainExperience(Amount);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[PlayerCharacter] CharacterStatsComponent를 찾을 수 없습니다."));
+	}
 }
 
 // 스킬 콜백 함수 구현

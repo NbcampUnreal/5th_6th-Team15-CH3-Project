@@ -2,9 +2,8 @@
 
 
 #include "PlayerMade/CharacterStatsComponent.h"
-#include "GameFramework/Character.h" // ACharacter 사용을 위해 필요
-#include "GameFramework/CharacterMovementComponent.h" // CharacterMovementComponent 사용을 위해 필요
-
+#include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 // Sets default values
 UCharacterStatsComponent::UCharacterStatsComponent()
 {
@@ -51,12 +50,13 @@ void UCharacterStatsComponent::Die()
 
 void UCharacterStatsComponent::GainExperience(int32 Amount)
 {
-    // 사망 상태에서는 경험치 획득방지
+    // 사망 상태에서는 경험치 획득 방지
     if (IsDead()) return;
 
     Experience += Amount;
 
-    UE_LOG(LogTemp, Warning, TEXT("[Stats] Gained %d EXP. Current: %d/%d (Level %d)"), Amount, Experience, MaxExperience, Level);
+    UE_LOG(LogTemp, Warning, TEXT("[Stats] Gained %d EXP. Current: %d/%d (Level %d)"),
+        Amount, Experience, MaxExperience, Level);
 
     // 경험치가 최대치를 넘었는지 체크
     if (Experience >= MaxExperience)
@@ -67,25 +67,24 @@ void UCharacterStatsComponent::GainExperience(int32 Amount)
 
 void UCharacterStatsComponent::LevelUp()
 {
-    // 1. 초과 경험치 계산
+    // 초과 경험치 계산
     int32 OverExp = Experience - MaxExperience;
 
-    // 2. 레벨 및 다음 MaxExperience 갱신
     Level++;
     Experience = OverExp;
 
-    // MaxExperience 증가 로직 (예시: 레벨마다 100씩 증가)
-    MaxExperience += 100;
+    // MaxExperience 자동 증가 (20%씩 증가)
+    MaxExperience = FMath::CeilToInt(MaxExperience * 1.2f);
 
-    UE_LOG(LogTemp, Warning, TEXT("=== LEVEL UP! New Level: %d, Next MaxEXP: %d ==="), Level, MaxExperience);
+    UE_LOG(LogTemp, Warning, TEXT("=== LEVEL UP! New Level: %d, Next MaxEXP: %d ==="),
+        Level, MaxExperience);
 
-    // 3. 스탯 적용
     ApplyLevelUpStats();
 
-    // 4. 남은 경험치(OverExp)로 추가 레벨업이 가능한지 확인
+    // 남은 경험치로 연속 레벨업 가능 여부 확인
     if (Experience >= MaxExperience)
     {
-        LevelUp(); // 1프레임에 여러 레벨이 오를 수 있도록 재귀 호출
+        LevelUp();
     }
 }
 
@@ -96,19 +95,7 @@ void UCharacterStatsComponent::ApplyLevelUpStats()
     //MaxHP += 10.0f;
     //CurrentHP = MaxHP; // 레벨업 시 체력 완전 회복
 
-    //// 2. 공격력, 이동 속도 등 증가
+    //// 2. 공격력
     //AttackDamage += 2.0f;
-    //MoveSpeed += 20.0f;
 
-    //// 3. 이동 속도 변경을 CharacterMovementComponent에 적용
-    //if (AActor* OwnerActor = GetOwner())
-    //{
-    //    if (ACharacter* Char = Cast<ACharacter>(OwnerActor))
-    //    {
-    //        if (UCharacterMovementComponent* MovementComp = Char->GetCharacterMovement())
-    //        {
-    //            MovementComp->MaxWalkSpeed = MoveSpeed;
-    //        }
-    //    }
-    //}
 }
