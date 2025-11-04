@@ -15,7 +15,7 @@ AMonsterBullet::AMonsterBullet()
 	ProjecttileMovementComp->InitialSpeed = 3000.0f;
 	ProjecttileMovementComp->MaxSpeed = 3000.0f;
 	ProjecttileMovementComp->bRotationFollowsVelocity = true;
-	ProjecttileMovementComp->bShouldBounce = true;
+	ProjecttileMovementComp->bShouldBounce = false;
 	ProjecttileMovementComp->Bounciness = 0.5f;
 
 

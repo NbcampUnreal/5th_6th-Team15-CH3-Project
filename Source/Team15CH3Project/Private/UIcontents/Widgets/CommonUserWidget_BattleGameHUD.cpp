@@ -46,4 +46,54 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 
 	if (MPText)
 		MPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurrentMP, MaxMP)));
+
+	if (CurrentHP > 0.0f)
+	{
+		//경과 시간 누적
+		GameTimeElapsed += DeltaTime;
+
+		//시간 업데이트
+		if (CurrentTime)
+		{
+			int32 TotalSeconds = FMath::FloorToInt(GameTimeElapsed);
+			int32 Minutes = TotalSeconds / 60;
+			int32 Seconds = TotalSeconds % 60;
+
+			//"00:00" 형태로 포맷팅합니다.
+			FString TimeString = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
+			CurrentTime->SetText(FText::FromString(TimeString));
+		}
+	}
+	else//(CurrentHP <= 0.0f 일 때)
+	{
+		if (bIsDefeatUIShown)
+		{
+			return;
+		}
+
+		if (DefeatWidgetClass)
+		{
+			//순수 블루프린트 위젯이므로 UUserWidget으로 생성합니다.
+			UUserWidget* DefeatUI = CreateWidget<UUserWidget>(GetWorld(), DefeatWidgetClass);
+
+			if (DefeatUI)
+			{
+				//랜덤 문구 선택 및 함수 호출
+				FString QuoteToDisplay = FString();
+				if (DefeatQuotes.Num() > 0)
+				{
+					int32 RandomIndex = FMath::RandRange(0, DefeatQuotes.Num() - 1);
+					QuoteToDisplay = DefeatQuotes[RandomIndex];
+				}
+
+				FString FunctionCallString = FString::Printf(TEXT("%s %s"), TEXT("SetDefeatQuoteBP"), *QuoteToDisplay);
+
+				DefeatUI->CallFunctionByNameWithArguments(*FunctionCallString, *GLog, nullptr, true);
+
+				DefeatUI->AddToViewport();
+				bIsDefeatUIShown = true;
+			}
+		}
+		return;
+	}
 }

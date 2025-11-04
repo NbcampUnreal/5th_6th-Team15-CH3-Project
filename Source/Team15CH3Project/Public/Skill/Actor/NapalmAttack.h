@@ -31,9 +31,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NapalmAttack")
 	UStaticMeshComponent* CastingMeshOut;
 
-
-
-	// 스케일 관련
 	UPROPERTY(EditAnywhere, Category = "Skill")
 	float GrowSpeed;
 
