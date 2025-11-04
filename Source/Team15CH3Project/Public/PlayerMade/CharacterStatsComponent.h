@@ -7,7 +7,7 @@
 #include "CharacterStatsComponent.generated.h"
 
 
-class ACharacter; // UCharacterMovementComponent 사용을 위해 전방선언 필요
+class ACharacter;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TEAM15CH3PROJECT_API UCharacterStatsComponent : public UActorComponent
@@ -24,6 +24,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Stats | Progression")
 	void GainExperience(int32 Amount);
+
 
 protected:
 	// 사망 시 호출되는 내부 함수
