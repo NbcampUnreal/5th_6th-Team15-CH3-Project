@@ -40,8 +40,14 @@ public:
     UPROPERTY()
     class UImage* SelectedSkillImage;
 
-    UPROPERTY()
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill Type")
     FPassiveItemData SavedPassiveSkillData;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill Type")
+    FActiveSkillItemData SavedActiveSkillData;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Skill Type")
+    bool bIsPassiveSlot = true;
 
     static int32 LastAssignedSlotIndex;
     static float StaticBaseAttackDamage;

@@ -33,168 +33,283 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct() // 위젯이 처음 나타날 때 한
 		{
 			if (UPro_M_GameInstance* ProGI = Cast<UPro_M_GameInstance>(GI))
 			{
-				if (ProGI->SkillDataAsset && ProGI->SkillDataAsset->PassiveSkills.Num() > 0)
+				if (ProGI->SkillDataAsset &&
+					(ProGI->SkillDataAsset->PassiveSkills.Num() > 0 || ProGI->SkillDataAsset->ActiveSkills.Num() > 0))
 				{
-
 					APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 					USkillInventoryComponent* SkillInventory = PlayerCharacter ? PlayerCharacter->FindComponentByClass<USkillInventoryComponent>() : nullptr;
 
-					//선택 가능한 스킬 목록 필터링
-					TArray<FPassiveItemData> AvailableSkills;
+					// 선택 가능한 스킬 목록
+					TArray<FPassiveItemData> AvailablePassiveSkills;
+					TArray<FActiveSkillItemData> AvailableActiveSkills;
+
+					// ---- Passive Filtering ----
 					for (const FPassiveItemData& SkillData : ProGI->SkillDataAsset->PassiveSkills)
 					{
 						bool bIsMaxStack = false;
+
 						if (SkillInventory)
 						{
-							//현재 인벤토리에서 스킬 찾기
 							for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
 							{
-								if (InvSkill.Type == SkillData.Type)
+								if (InvSkill.Type == SkillData.Type && InvSkill.StackCnt >= InvSkill.MaxStackCnt)
 								{
-									//현재 스택이 최대 스택과 같으면 또는 초과하면
-									if (InvSkill.StackCnt >= InvSkill.MaxStackCnt)
-									{
-										bIsMaxStack = true;
-									}
+									bIsMaxStack = true;
 									break;
 								}
 							}
 						}
 
-						//최대 스택이 아닌 스킬만 목록에 추가합니다.
 						if (!bIsMaxStack)
-						{
-							AvailableSkills.Add(SkillData);
-						}
+							AvailablePassiveSkills.Add(SkillData);
 					}
 
-					//선택 가능한 스킬이 없으면 위젯을 비활성화/숨기거나 리턴합니다.
-					if (AvailableSkills.Num() == 0)
+					// ---- Active Filtering ----
+					for (const FActiveSkillItemData& SkillData : ProGI->SkillDataAsset->ActiveSkills)
 					{
-						// 모든 스킬이 MAX 스택이면 위젯 슬롯을 숨기거나 비활성화합니다.
-						UE_LOG(LogTemp, Warning, TEXT("No available skills to show in slot 1 (All skills maxed or already shown)."));
-						return; // 스킬을 설정하지 않고 종료
-					}
+						bool bIsMaxStack = false;
 
-
-					//필터링된 목록에서 랜덤 선택
-					int32 MaxIndex = AvailableSkills.Num() - 1;
-					int32 RandomIndex = FMath::RandRange(0, MaxIndex);
-					const FPassiveItemData& Skill = AvailableSkills[RandomIndex];
-
-					//스택 계산 및 위젯 설정 (기존 로직 유지)
-					int32 DisplayStack = Skill.StackCnt;
-
-					if (SkillInventory)
-					{
-						for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+						if (SkillInventory)
 						{
-							if (InvSkill.Type == Skill.Type)
+							for (const FActiveSkillItemData& InvSkill : SkillInventory->ActiveSkillsInv)
 							{
-								DisplayStack = InvSkill.StackCnt;
-
-								if (DisplayStack < InvSkill.MaxStackCnt)
+								if (InvSkill.Type == SkillData.Type && InvSkill.StackCnt >= InvSkill.MaxStackCnt)
 								{
-									DisplayStack++; // 다음 레벨+1
+									bIsMaxStack = true;
+									break;
 								}
-								break;
 							}
 						}
+
+						if (!bIsMaxStack)
+							AvailableActiveSkills.Add(SkillData);
 					}
 
-					SavedPassiveSkillData = Skill;
+					// 스킬이 전부 최대 스택일 경우
+					if (AvailablePassiveSkills.Num() == 0 && AvailableActiveSkills.Num() == 0)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("No available skills to show in slot 1 (All skills maxed)."));
+						return;
+					}
 
-					if (SkillNameText) { SkillNameText->SetText(Skill.SkillName); }
-					if (Skill.Icon) { SkillIcon->SetBrushFromTexture(Skill.Icon); SelectedSkillImage = SkillIcon; }
-					if (SkillDescriptionText) { SkillDescriptionText->SetText(Skill.Description); }
-					if (StackText) { FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack); StackText->SetText(FText::FromString(StackLevel)); }
+					// ---- Passive or Active 랜덤 선택 ----
+					bool bChoosePassive = true;
+					if (AvailablePassiveSkills.Num() > 0 && AvailableActiveSkills.Num() > 0)
+					{
+						bChoosePassive = FMath::RandBool(); // 50% 확률
+					}
+					else if (AvailablePassiveSkills.Num() == 0)
+					{
+						bChoosePassive = false;
+					}
 
+					// ---- 실제 선택 및 UI 세팅 ----
+					if (bChoosePassive)
+					{
+						int32 RandomIndex = FMath::RandRange(0, AvailablePassiveSkills.Num() - 1);
+						const FPassiveItemData& Skill = AvailablePassiveSkills[RandomIndex];
+
+						int32 DisplayStack = Skill.StackCnt;
+						if (SkillInventory)
+						{
+							for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+							{
+								if (InvSkill.Type == Skill.Type)
+								{
+									DisplayStack = FMath::Min(InvSkill.StackCnt + 1, InvSkill.MaxStackCnt);
+									break;
+								}
+							}
+						}
+
+						SavedPassiveSkillData = Skill;
+						bIsPassiveSlot = true;
+
+						if (SkillNameText) SkillNameText->SetText(Skill.SkillName);
+						if (Skill.Icon) SkillIcon->SetBrushFromTexture(Skill.Icon);
+						if (SkillDescriptionText) SkillDescriptionText->SetText(Skill.Description);
+						SelectedSkillImage = SkillIcon;
+						if (StackText)
+						{
+							FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
+							StackText->SetText(FText::FromString(StackLevel));
+						}
+					}
+					else
+					{
+						int32 RandomIndex = FMath::RandRange(0, AvailableActiveSkills.Num() - 1);
+						const FActiveSkillItemData& Skill = AvailableActiveSkills[RandomIndex];
+
+						int32 DisplayStack = Skill.StackCnt;
+						if (SkillInventory)
+						{
+							for (const FActiveSkillItemData& InvSkill : SkillInventory->ActiveSkillsInv)
+							{
+								if (InvSkill.Type == Skill.Type)
+								{
+									DisplayStack = FMath::Min(InvSkill.StackCnt + 1, InvSkill.MaxStackCnt);
+									break;
+								}
+							}
+						}
+
+						SavedActiveSkillData = Skill;
+						bIsPassiveSlot = false;
+
+						if (SkillNameText) SkillNameText->SetText(Skill.SkillName);
+						if (Skill.Icon) SkillIcon->SetBrushFromTexture(Skill.Icon);
+						if (SkillDescriptionText) SkillDescriptionText->SetText(Skill.Description);
+						SelectedSkillImage = SkillIcon;
+						if (StackText)
+						{
+							FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
+							StackText->SetText(FText::FromString(StackLevel));
+						}
+					}
 				}
 			}
 		}
 	}
+
 	if (this->GetName().Contains(TEXT("WBP_Skill_Slot_2")))
 	{
 		if (UGameInstance* GI = UGameplayStatics::GetGameInstance(GetWorld()))
 		{
 			if (UPro_M_GameInstance* ProGI = Cast<UPro_M_GameInstance>(GI))
 			{
-				if (ProGI->SkillDataAsset && ProGI->SkillDataAsset->PassiveSkills.Num() > 0)
+				if (ProGI->SkillDataAsset &&
+					(ProGI->SkillDataAsset->PassiveSkills.Num() > 0 || ProGI->SkillDataAsset->ActiveSkills.Num() > 0))
 				{
-
 					APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 					USkillInventoryComponent* SkillInventory = PlayerCharacter ? PlayerCharacter->FindComponentByClass<USkillInventoryComponent>() : nullptr;
 
-					//선택 가능한 스킬 목록 필터링
-					TArray<FPassiveItemData> AvailableSkills;
+					// 선택 가능한 스킬 목록
+					TArray<FPassiveItemData> AvailablePassiveSkills;
+					TArray<FActiveSkillItemData> AvailableActiveSkills;
+
+					// ---- Passive Filtering ----
 					for (const FPassiveItemData& SkillData : ProGI->SkillDataAsset->PassiveSkills)
 					{
 						bool bIsMaxStack = false;
+
 						if (SkillInventory)
 						{
-							//현재 인벤토리에서 스킬 찾기
 							for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
 							{
-								if (InvSkill.Type == SkillData.Type)
+								if (InvSkill.Type == SkillData.Type && InvSkill.StackCnt >= InvSkill.MaxStackCnt)
 								{
-									//현재 스택이 최대 스택과 같으면 또는 초과하면
-									if (InvSkill.StackCnt >= InvSkill.MaxStackCnt)
-									{
-										bIsMaxStack = true;
-									}
+									bIsMaxStack = true;
 									break;
 								}
 							}
 						}
 
-						//최대 스택이 아닌 스킬만 목록에 추가합니다.
 						if (!bIsMaxStack)
-						{
-							AvailableSkills.Add(SkillData);
-						}
+							AvailablePassiveSkills.Add(SkillData);
 					}
 
-					//선택 가능한 스킬이 없으면 위젯을 비활성화/숨기거나 리턴합니다.
-					if (AvailableSkills.Num() == 0)
+					// ---- Active Filtering ----
+					for (const FActiveSkillItemData& SkillData : ProGI->SkillDataAsset->ActiveSkills)
 					{
-						// 모든 스킬이 MAX 스택이면 위젯 슬롯을 숨기거나 비활성화합니다.
-						UE_LOG(LogTemp, Warning, TEXT("No available skills to show in slot 1 (All skills maxed or already shown)."));
-						return; // 스킬을 설정하지 않고 종료
-					}
+						bool bIsMaxStack = false;
 
-
-					//필터링된 목록에서 랜덤 선택
-					int32 MaxIndex = AvailableSkills.Num() - 1;
-					int32 RandomIndex = FMath::RandRange(0, MaxIndex);
-					const FPassiveItemData& Skill = AvailableSkills[RandomIndex];
-
-					//스택 계산 및 위젯 설정 (기존 로직 유지)
-					int32 DisplayStack = Skill.StackCnt;
-
-					if (SkillInventory)
-					{
-						for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+						if (SkillInventory)
 						{
-							if (InvSkill.Type == Skill.Type)
+							for (const FActiveSkillItemData& InvSkill : SkillInventory->ActiveSkillsInv)
 							{
-								DisplayStack = InvSkill.StackCnt;
-
-								if (DisplayStack < InvSkill.MaxStackCnt)
+								if (InvSkill.Type == SkillData.Type && InvSkill.StackCnt >= InvSkill.MaxStackCnt)
 								{
-									DisplayStack++; // 다음 레벨+1
+									bIsMaxStack = true;
+									break;
 								}
-								break;
 							}
 						}
+
+						if (!bIsMaxStack)
+							AvailableActiveSkills.Add(SkillData);
 					}
 
-					SavedPassiveSkillData = Skill;
+					// 스킬이 전부 최대 스택일 경우
+					if (AvailablePassiveSkills.Num() == 0 && AvailableActiveSkills.Num() == 0)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("No available skills to show in slot 1 (All skills maxed)."));
+						return;
+					}
 
-					if (SkillNameText) { SkillNameText->SetText(Skill.SkillName); }
-					if (Skill.Icon) { SkillIcon->SetBrushFromTexture(Skill.Icon); SelectedSkillImage = SkillIcon; }
-					if (SkillDescriptionText) { SkillDescriptionText->SetText(Skill.Description); }
-					if (StackText) { FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack); StackText->SetText(FText::FromString(StackLevel)); }
+					// ---- Passive or Active 랜덤 선택 ----
+					bool bChoosePassive = true;
+					if (AvailablePassiveSkills.Num() > 0 && AvailableActiveSkills.Num() > 0)
+					{
+						bChoosePassive = FMath::RandBool(); // 50% 확률
+					}
+					else if (AvailablePassiveSkills.Num() == 0)
+					{
+						bChoosePassive = false;
+					}
 
+					// ---- 실제 선택 및 UI 세팅 ----
+					if (bChoosePassive)
+					{
+						int32 RandomIndex = FMath::RandRange(0, AvailablePassiveSkills.Num() - 1);
+						const FPassiveItemData& Skill = AvailablePassiveSkills[RandomIndex];
+
+						int32 DisplayStack = Skill.StackCnt;
+						if (SkillInventory)
+						{
+							for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+							{
+								if (InvSkill.Type == Skill.Type)
+								{
+									DisplayStack = FMath::Min(InvSkill.StackCnt + 1, InvSkill.MaxStackCnt);
+									break;
+								}
+							}
+						}
+
+						SavedPassiveSkillData = Skill;
+						bIsPassiveSlot = true;
+
+						if (SkillNameText) SkillNameText->SetText(Skill.SkillName);
+						if (Skill.Icon) SkillIcon->SetBrushFromTexture(Skill.Icon);
+						if (SkillDescriptionText) SkillDescriptionText->SetText(Skill.Description);
+						SelectedSkillImage = SkillIcon;
+						if (StackText)
+						{
+							FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
+							StackText->SetText(FText::FromString(StackLevel));
+						}
+					}
+					else
+					{
+						int32 RandomIndex = FMath::RandRange(0, AvailableActiveSkills.Num() - 1);
+						const FActiveSkillItemData& Skill = AvailableActiveSkills[RandomIndex];
+
+						int32 DisplayStack = Skill.StackCnt;
+						if (SkillInventory)
+						{
+							for (const FActiveSkillItemData& InvSkill : SkillInventory->ActiveSkillsInv)
+							{
+								if (InvSkill.Type == Skill.Type)
+								{
+									DisplayStack = FMath::Min(InvSkill.StackCnt + 1, InvSkill.MaxStackCnt);
+									break;
+								}
+							}
+						}
+
+						SavedActiveSkillData = Skill;
+						bIsPassiveSlot = false;
+
+						if (SkillNameText) SkillNameText->SetText(Skill.SkillName);
+						if (Skill.Icon) SkillIcon->SetBrushFromTexture(Skill.Icon);
+						if (SkillDescriptionText) SkillDescriptionText->SetText(Skill.Description);
+						SelectedSkillImage = SkillIcon;
+						if (StackText)
+						{
+							FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
+							StackText->SetText(FText::FromString(StackLevel));
+						}
+					}
 				}
 			}
 		}
@@ -205,82 +320,139 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct() // 위젯이 처음 나타날 때 한
 		{
 			if (UPro_M_GameInstance* ProGI = Cast<UPro_M_GameInstance>(GI))
 			{
-				if (ProGI->SkillDataAsset && ProGI->SkillDataAsset->PassiveSkills.Num() > 0)
+				if (ProGI->SkillDataAsset &&
+					(ProGI->SkillDataAsset->PassiveSkills.Num() > 0 || ProGI->SkillDataAsset->ActiveSkills.Num() > 0))
 				{
-
 					APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
 					USkillInventoryComponent* SkillInventory = PlayerCharacter ? PlayerCharacter->FindComponentByClass<USkillInventoryComponent>() : nullptr;
 
-					//선택 가능한 스킬 목록 필터링
-					TArray<FPassiveItemData> AvailableSkills;
+					// 선택 가능한 스킬 목록
+					TArray<FPassiveItemData> AvailablePassiveSkills;
+					TArray<FActiveSkillItemData> AvailableActiveSkills;
+
+					// ---- Passive Filtering ----
 					for (const FPassiveItemData& SkillData : ProGI->SkillDataAsset->PassiveSkills)
 					{
 						bool bIsMaxStack = false;
+
 						if (SkillInventory)
 						{
-							//현재 인벤토리에서 스킬 찾기
 							for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
 							{
-								if (InvSkill.Type == SkillData.Type)
+								if (InvSkill.Type == SkillData.Type && InvSkill.StackCnt >= InvSkill.MaxStackCnt)
 								{
-									//현재 스택이 최대 스택과 같으면 또는 초과하면
-									if (InvSkill.StackCnt >= InvSkill.MaxStackCnt)
-									{
-										bIsMaxStack = true;
-									}
+									bIsMaxStack = true;
 									break;
 								}
 							}
 						}
 
-						//최대 스택이 아닌 스킬만 목록에 추가합니다.
 						if (!bIsMaxStack)
-						{
-							AvailableSkills.Add(SkillData);
-						}
+							AvailablePassiveSkills.Add(SkillData);
 					}
 
-					//선택 가능한 스킬이 없으면 위젯을 비활성화/숨기거나 리턴합니다.
-					if (AvailableSkills.Num() == 0)
+					// ---- Active Filtering ----
+					for (const FActiveSkillItemData& SkillData : ProGI->SkillDataAsset->ActiveSkills)
 					{
-						// 모든 스킬이 MAX 스택이면 위젯 슬롯을 숨기거나 비활성화합니다.
-						UE_LOG(LogTemp, Warning, TEXT("No available skills to show in slot 1 (All skills maxed or already shown)."));
-						return; // 스킬을 설정하지 않고 종료
-					}
+						bool bIsMaxStack = false;
 
-
-					//필터링된 목록에서 랜덤 선택
-					int32 MaxIndex = AvailableSkills.Num() - 1;
-					int32 RandomIndex = FMath::RandRange(0, MaxIndex);
-					const FPassiveItemData& Skill = AvailableSkills[RandomIndex];
-
-					//스택 계산 및 위젯 설정 (기존 로직 유지)
-					int32 DisplayStack = Skill.StackCnt;
-
-					if (SkillInventory)
-					{
-						for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+						if (SkillInventory)
 						{
-							if (InvSkill.Type == Skill.Type)
+							for (const FActiveSkillItemData& InvSkill : SkillInventory->ActiveSkillsInv)
 							{
-								DisplayStack = InvSkill.StackCnt;
-
-								if (DisplayStack < InvSkill.MaxStackCnt)
+								if (InvSkill.Type == SkillData.Type && InvSkill.StackCnt >= InvSkill.MaxStackCnt)
 								{
-									DisplayStack++; // 다음 레벨+1
+									bIsMaxStack = true;
+									break;
 								}
-								break;
 							}
 						}
+
+						if (!bIsMaxStack)
+							AvailableActiveSkills.Add(SkillData);
 					}
 
-					SavedPassiveSkillData = Skill;
+					// 스킬이 전부 최대 스택일 경우
+					if (AvailablePassiveSkills.Num() == 0 && AvailableActiveSkills.Num() == 0)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("No available skills to show in slot 1 (All skills maxed)."));
+						return;
+					}
 
-					if (SkillNameText) { SkillNameText->SetText(Skill.SkillName); }
-					if (Skill.Icon) { SkillIcon->SetBrushFromTexture(Skill.Icon); SelectedSkillImage = SkillIcon; }
-					if (SkillDescriptionText) { SkillDescriptionText->SetText(Skill.Description); }
-					if (StackText) { FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack); StackText->SetText(FText::FromString(StackLevel)); }
+					// ---- Passive or Active 랜덤 선택 ----
+					bool bChoosePassive = true;
+					if (AvailablePassiveSkills.Num() > 0 && AvailableActiveSkills.Num() > 0)
+					{
+						bChoosePassive = FMath::RandBool(); // 50% 확률
+					}
+					else if (AvailablePassiveSkills.Num() == 0)
+					{
+						bChoosePassive = false;
+					}
 
+					// ---- 실제 선택 및 UI 세팅 ----
+					if (bChoosePassive)
+					{
+						int32 RandomIndex = FMath::RandRange(0, AvailablePassiveSkills.Num() - 1);
+						const FPassiveItemData& Skill = AvailablePassiveSkills[RandomIndex];
+
+						int32 DisplayStack = Skill.StackCnt;
+						if (SkillInventory)
+						{
+							for (const FPassiveItemData& InvSkill : SkillInventory->PassiveSkillsInv)
+							{
+								if (InvSkill.Type == Skill.Type)
+								{
+									DisplayStack = FMath::Min(InvSkill.StackCnt + 1, InvSkill.MaxStackCnt);
+									break;
+								}
+							}
+						}
+
+						SavedPassiveSkillData = Skill;
+						bIsPassiveSlot = true;
+
+						if (SkillNameText) SkillNameText->SetText(Skill.SkillName);
+						if (Skill.Icon) SkillIcon->SetBrushFromTexture(Skill.Icon);
+						if (SkillDescriptionText) SkillDescriptionText->SetText(Skill.Description);
+						SelectedSkillImage = SkillIcon;
+						if (StackText)
+						{
+							FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
+							StackText->SetText(FText::FromString(StackLevel));
+						}
+					}
+					else
+					{
+						int32 RandomIndex = FMath::RandRange(0, AvailableActiveSkills.Num() - 1);
+						const FActiveSkillItemData& Skill = AvailableActiveSkills[RandomIndex];
+
+						int32 DisplayStack = Skill.StackCnt;
+						if (SkillInventory)
+						{
+							for (const FActiveSkillItemData& InvSkill : SkillInventory->ActiveSkillsInv)
+							{
+								if (InvSkill.Type == Skill.Type)
+								{
+									DisplayStack = FMath::Min(InvSkill.StackCnt + 1, InvSkill.MaxStackCnt);
+									break;
+								}
+							}
+						}
+
+						SavedActiveSkillData = Skill;
+						bIsPassiveSlot = false;
+
+						if (SkillNameText) SkillNameText->SetText(Skill.SkillName);
+						if (Skill.Icon) SkillIcon->SetBrushFromTexture(Skill.Icon);
+						if (SkillDescriptionText) SkillDescriptionText->SetText(Skill.Description);
+						SelectedSkillImage = SkillIcon;
+						if (StackText)
+						{
+							FString StackLevel = FString::Printf(TEXT("Lv.%d"), DisplayStack);
+							StackText->SetText(FText::FromString(StackLevel));
+						}
+					}
 				}
 			}
 		}
@@ -289,7 +461,11 @@ void UCommonUserWidget_Skill_Slot::NativeConstruct() // 위젯이 처음 나타날 때 한
 
 void UCommonUserWidget_Skill_Slot::OnSkillButtonClicked()
 {
-	if (!SelectedSkillImage) return;
+	if (!SelectedSkillImage)
+	{
+		UE_LOG(LogTemp, Error, TEXT("SelectedSkillImage is NULL. Button logic failed to start."));
+		return;
+	}
 
 	// 플레이어 및 컴포넌트 참조 가져오기
 	APlayerCharacter* PlayerCharacter = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0));
@@ -313,225 +489,225 @@ void UCommonUserWidget_Skill_Slot::OnSkillButtonClicked()
 		UE_LOG(LogTemp, Log, TEXT("STATIC Base Attack CACHED: %.1f"), StaticBaseAttackDamage);
 	}
 
-	//기존 스킬 존재 여부 확인 및 스택 계산
-	int32 CurrentStack = 0;
-	FPassiveItemData* ExistingSkill = nullptr;
+	// 최종적으로 HUD에 표시할 스택 변수
+	int32 FinalDisplayStack = 0;
+	int32 MaxStackToApply = 0;
 
-	for (FPassiveItemData& Skill : SkillInventory->PassiveSkillsInv)
+	// ==============================================================================
+	// ?? Passive Skill 처리
+	// ==============================================================================
+	if (bIsPassiveSlot)
 	{
-		if (Skill.Type == SavedPassiveSkillData.Type)
+		// 1. 기존 Passive 스킬 존재 여부 확인 및 포인터 가져오기
+		int32 CurrentStack = 0;
+		FPassiveItemData* ExistingSkill = nullptr;
+
+		for (FPassiveItemData& Skill : SkillInventory->PassiveSkillsInv)
 		{
-			ExistingSkill = &Skill;
-			break;
+			if (Skill.Type == SavedPassiveSkillData.Type)
+			{
+				ExistingSkill = &Skill;
+				break;
+			}
 		}
-	}
 
-	//스택 증가 또는 새 스킬 추가 로직 실행
-	if (ExistingSkill)
-	{
-		if (ExistingSkill->StackCnt < ExistingSkill->MaxStackCnt)
+		// 2. 스택 증가 또는 새 스킬 추가 로직 실행
+		if (ExistingSkill)
 		{
-			ExistingSkill->StackCnt++;
-			CurrentStack = ExistingSkill->StackCnt;
+			if (ExistingSkill->StackCnt < ExistingSkill->MaxStackCnt)
+			{
+				ExistingSkill->StackCnt++;
+				CurrentStack = ExistingSkill->StackCnt;
+			}
+			else
+			{
+				CurrentStack = ExistingSkill->StackCnt;
+			}
 		}
 		else
 		{
-			CurrentStack = ExistingSkill->StackCnt;
+			// Passive 새 스킬 추가
+			FPassiveItemData NewSkill = SavedPassiveSkillData;
+			NewSkill.StackCnt = 1;
+
+			SkillInventory->PassiveSkillsInv.Add(NewSkill);
+			CurrentStack = NewSkill.StackCnt;
+
+			UE_LOG(LogTemp, Log, TEXT("Passive Skill inv Added! Name: %s, Stack: %d. Size: %d"),
+				*NewSkill.SkillName.ToString(), CurrentStack, SkillInventory->PassiveSkillsInv.Num());
 		}
-	}
-	else
-	{
-		//새 스킬 추가
-		FPassiveItemData NewSkill = SavedPassiveSkillData;
-		NewSkill.StackCnt = 1;
 
-		SkillInventory->PassiveSkillsInv.Add(NewSkill);
-		CurrentStack = NewSkill.StackCnt;
-
-		UE_LOG(LogTemp, Log, TEXT("Passive Skill inv Added to [%s]! Name: %s, Initial Stack: %d. Inventory Size: %d"),
-			*SkillInventory->GetName(), //컴포넌트 이름 (인벤토리 이름) 추가
-			*NewSkill.SkillName.ToString(),
-			CurrentStack,
-			SkillInventory->PassiveSkillsInv.Num());
+		// 3. 스택 정보 업데이트
+		MaxStackToApply = ExistingSkill ? ExistingSkill->MaxStackCnt : SavedPassiveSkillData.MaxStackCnt;
+		FinalDisplayStack = FMath::Min(CurrentStack, MaxStackToApply);
 	}
 
-
-	//하드코딩 패시브 적용
-	if (!StatComponent) return;
-
-	//스택 및 제한 계산
-	int32 MaxStackToApply = ExistingSkill ? ExistingSkill->MaxStackCnt : SavedPassiveSkillData.MaxStackCnt;
-	int32 AppliedStack = FMath::Min(CurrentStack, MaxStackToApply);
-
-	//스택당 효과 비율 (10%)
-	float RatePerStack = 0.1f;
-
-	//블루프린트에서 수정된 현재 능력치 값(=실제 적용 중인 값)을 기준으로 계산
-	float BP_BaseAttackDamage = StatComponent->AttackDamage;
-	float BP_BaseAttackSpeed = StatComponent->AttackSpeed;
-	float BP_BaseMaxHP = StatComponent->MaxHP;
-	float BP_BaseMaxMP = StatComponent->MaxMP;
-	float BP_BaseMoveSpeed = StatComponent->MoveSpeed;
-
-
-	//공격력 증가 패시브
-	if (SavedPassiveSkillData.Type == EPassiveItemType::AttackPowerBoost)
+	// ==============================================================================
+	// ?? Active Skill 처리
+	// ==============================================================================
+	else // bIsPassiveSlot == false
 	{
-		float BaseToUse_Attack = BP_BaseAttackDamage;
+		// 1. 기존 Active 스킬 존재 여부 확인 및 포인터 가져오기
+		int32 CurrentStack = 0;
+		FActiveSkillItemData* ExistingActiveSkill = nullptr;
 
-		StatComponent->AttackDamage = BaseToUse_Attack * (1.0f + RatePerStack * AppliedStack);
-
-		UE_LOG(LogTemp, Warning, TEXT("[Passive] AttackDamage updated: %.1f (Base: %.1f, Stack: %d)"),
-			StatComponent->AttackDamage, BaseToUse_Attack, AppliedStack);
-	}
-
-	//공격 속도 증가 패시브
-	if (SavedPassiveSkillData.Type == EPassiveItemType::AttackSpeedBoost)
-	{
-		float BaseToUse_Speed = BP_BaseAttackSpeed;
-
-		StatComponent->AttackSpeed = BaseToUse_Speed * (1.0f + RatePerStack * AppliedStack);
-
-		UE_LOG(LogTemp, Warning, TEXT("[Passive] AttackSpeed updated: %.2f (Base: %.2f, Stack: %d)"),
-			StatComponent->AttackSpeed, BaseToUse_Speed, AppliedStack);
-	}
-
-	//최대 HP 증가 패시브
-	if (SavedPassiveSkillData.Type == EPassiveItemType::HPBoost)
-	{
-		float BaseToUse_HP = BP_BaseMaxHP;
-		float OldMaxHP = StatComponent->MaxHP;
-
-		//현재 HP 비율 계산 (MaxHP가 0일 경우 예외 처리)
-		float HealthRatio = (OldMaxHP > 0.0f) ? (StatComponent->CurrentHP / OldMaxHP) : 1.0f;
-
-		//MaxHP 증가
-		StatComponent->MaxHP = BaseToUse_HP * (1.0f + RatePerStack * AppliedStack);
-
-		//CurrentHP를 새로운 MaxHP에 비율을 적용하여 설정
-		StatComponent->CurrentHP = StatComponent->MaxHP * HealthRatio;
-
-		UE_LOG(LogTemp, Warning, TEXT("[Passive] MaxHP updated: %.1f (Base: %.1f, Stack: %d)"),
-			StatComponent->MaxHP, BaseToUse_HP, AppliedStack);
-	}
-
-	//최대 MP 증가 패시브
-	if (SavedPassiveSkillData.Type == EPassiveItemType::MPBoost)
-	{
-		float BaseToUse_MP = BP_BaseMaxMP;
-		float OldMaxMP = StatComponent->MaxMP;
-
-		//현재 MP 비율 계산 (MaxMP가 0일 경우 예외 처리)
-		float ManaRatio = (OldMaxMP > 0.0f) ? (StatComponent->CurrentMP / OldMaxMP) : 1.0f;
-
-		//MaxMP 증가
-		StatComponent->MaxMP = BaseToUse_MP * (1.0f + RatePerStack * AppliedStack);
-
-		//CurrentMP를 새로운 MaxMP에 비율을 적용하여 설정
-		StatComponent->CurrentMP = StatComponent->MaxMP * ManaRatio;
-
-		UE_LOG(LogTemp, Warning, TEXT("[Passive] MaxMP updated: %.1f (Base: %.1f, Stack: %d)"),
-			StatComponent->MaxMP, BaseToUse_MP, AppliedStack);
-	}
-
-	//이동 속도 증가 패시브
-	if (SavedPassiveSkillData.Type == EPassiveItemType::SprintBoost)
-	{
-		float BaseToUse_Move = BP_BaseMoveSpeed;
-
-		//StatComponent의 MoveSpeed 값 갱신
-		StatComponent->MoveSpeed = BaseToUse_Move * (1.0f + RatePerStack * AppliedStack);
-
-		//UCharacterMovementComponent 찾기 및 실제 MaxWalkSpeed에 적용
-		if (APlayerCharacter* PC = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
+		for (FActiveSkillItemData& Skill : SkillInventory->ActiveSkillsInv)
 		{
-			if (UCharacterMovementComponent* MovementComp = PC->GetCharacterMovement())
+			if (Skill.Type == SavedActiveSkillData.Type)
 			{
-				//StatComponent에 저장된 새 MoveSpeed 값을 실제 MaxWalkSpeed에 직접 적용
-				MovementComp->MaxWalkSpeed = StatComponent->MoveSpeed;
-				UE_LOG(LogTemp, Warning, TEXT("[Passive] MaxWalkSpeed applied: %.1f"), MovementComp->MaxWalkSpeed);
+				ExistingActiveSkill = &Skill;
+				break;
 			}
 		}
-		UE_LOG(LogTemp, Warning, TEXT("[Passive] MoveSpeed updated: %.1f (Base: %.1f, Stack: %d)"),
-			StatComponent->MoveSpeed, BaseToUse_Move, AppliedStack);
-	}
 
-	//발사체 수 증가
-	if (SavedPassiveSkillData.Type == EPassiveItemType::AttackIncreasingDirection)
+		// 2. 스택 증가 또는 새 스킬 추가 로직 실행
+		if (ExistingActiveSkill)
+		{
+			if (ExistingActiveSkill->StackCnt < ExistingActiveSkill->MaxStackCnt)
+			{
+				ExistingActiveSkill->StackCnt++;
+				CurrentStack = ExistingActiveSkill->StackCnt;
+			}
+			else
+			{
+				CurrentStack = ExistingActiveSkill->StackCnt;
+			}
+		}
+		else
+		{
+			// Active 새 스킬 추가
+			FActiveSkillItemData NewActiveSkill = SavedActiveSkillData;
+			NewActiveSkill.StackCnt = 1;
+
+			SkillInventory->ActiveSkillsInv.Add(NewActiveSkill);
+			CurrentStack = NewActiveSkill.StackCnt;
+
+			UE_LOG(LogTemp, Log, TEXT("Active Skill inv Added! Name: %s, Stack: %d. Size: %d"),
+				*NewActiveSkill.SkillName.ToString(), CurrentStack, SkillInventory->ActiveSkillsInv.Num());
+		}
+
+		// 3. 스택 정보 업데이트
+		MaxStackToApply = ExistingActiveSkill ? ExistingActiveSkill->MaxStackCnt : SavedActiveSkillData.MaxStackCnt;
+		FinalDisplayStack = FMath::Min(CurrentStack, MaxStackToApply);
+	}
+	if (UWorld* World = GetWorld())
 	{
-		int32 BaseToUse_Projectile = 1;
-		StatComponent->ProjectileCount = BaseToUse_Projectile + AppliedStack;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = PlayerCharacter;
 
-		UE_LOG(LogTemp, Warning, TEXT("[Passive] ProjectileCount updated: %d (Base: %d, Stack: %d)"),
-			StatComponent->ProjectileCount, BaseToUse_Projectile, AppliedStack);
+		// ApassiveItem 스폰 (별도의 블루프린트 지정 없이 C++ 기본 클래스 사용)
+		ApassiveItem* NewPassive = World->SpawnActor<ApassiveItem>(
+			ApassiveItem::StaticClass(),
+			PlayerCharacter->GetActorLocation(),
+			FRotator::ZeroRotator,
+			SpawnParams
+		);
+
+		if (NewPassive)
+		{
+			// 타입 및 데이터 전달
+			NewPassive->PassiveType = SavedPassiveSkillData.Type;
+			NewPassive->PassiveSkillData = SavedPassiveSkillData;
+
+			// 효과 적용
+			NewPassive->PassiveSkillApply(PlayerCharacter);
+		}
 	}
-
-	//흡혈 효과
-	if (SavedPassiveSkillData.Type == EPassiveItemType::BloodAbsorbing)
-	{
-		float HealAmount = StatComponent->MaxHP * RatePerStack * AppliedStack;
-		StatComponent->CurrentHP = FMath::Clamp(StatComponent->CurrentHP + HealAmount, 0.0f, StatComponent->MaxHP);
-
-		UE_LOG(LogTemp, Warning, TEXT("[Passive] BloodAbsorbing healed: +%.1f → CurrentHP=%.1f / MaxHP=%.1f (Stack: %d)"),
-			HealAmount, StatComponent->CurrentHP, StatComponent->MaxHP, AppliedStack);
-	}
-
 
 	//HUD 갱신
 	if (UCommonUserWidget_BattleGameHUD* BattleHUD = GetBattleHUD())
 	{
 		if (!SelectedSkillImage) return;
+		int32 DisplayLevel = FMath::Min(FinalDisplayStack, 5);
 
-		//1번 슬롯
-		if (BattleHUD->SkillSlot_1_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_1_Type == EPassiveItemType::None)
+		// Passive Skill
+		if (bIsPassiveSlot)
 		{
-			BattleHUD->Image_Skill_1->SetBrush(SelectedSkillImage->GetBrush());
-			BattleHUD->Image_Skill_1->SetColorAndOpacity(FLinearColor::White);
-
-			int32 DisplayStack = FMath::Min(CurrentStack, 5);
-			BattleHUD->StackCnt_1->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayStack)));
-			BattleHUD->StackCnt_1->SetVisibility(ESlateVisibility::Visible);
-
-			BattleHUD->SkillSlot_1_Type = SavedPassiveSkillData.Type;
+			// 1번 슬롯 (기존 스킬이거나 빈 슬롯인 경우 갱신)
+			if (BattleHUD->SkillSlot_1_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_1_Type == EPassiveItemType::None)
+			{
+				BattleHUD->Image_Skill_1->SetBrush(SelectedSkillImage->GetBrush());
+				BattleHUD->Image_Skill_1->SetColorAndOpacity(FLinearColor::White);
+				BattleHUD->PassiveStackCnt_1->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayLevel)));
+				BattleHUD->PassiveStackCnt_1->SetVisibility(ESlateVisibility::Visible);
+				BattleHUD->SkillSlot_1_Type = SavedPassiveSkillData.Type; // Passive Type 저장
+			}
+			else if (BattleHUD->SkillSlot_2_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_2_Type == EPassiveItemType::None)
+			{
+				BattleHUD->Image_Skill_2->SetBrush(SelectedSkillImage->GetBrush());
+				BattleHUD->Image_Skill_2->SetColorAndOpacity(FLinearColor::White);
+				BattleHUD->PassiveStackCnt_2->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayLevel)));
+				BattleHUD->PassiveStackCnt_2->SetVisibility(ESlateVisibility::Visible);
+				BattleHUD->SkillSlot_2_Type = SavedPassiveSkillData.Type;
+			}
+			else if (BattleHUD->SkillSlot_3_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_3_Type == EPassiveItemType::None)
+			{
+				BattleHUD->Image_Skill_3->SetBrush(SelectedSkillImage->GetBrush());
+				BattleHUD->Image_Skill_3->SetColorAndOpacity(FLinearColor::White);
+				BattleHUD->PassiveStackCnt_3->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayLevel)));
+				BattleHUD->PassiveStackCnt_3->SetVisibility(ESlateVisibility::Visible);
+				BattleHUD->SkillSlot_3_Type = SavedPassiveSkillData.Type;
+			}
+			else if (BattleHUD->SkillSlot_4_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_4_Type == EPassiveItemType::None)
+			{
+				BattleHUD->Image_Skill_4->SetBrush(SelectedSkillImage->GetBrush());
+				BattleHUD->Image_Skill_4->SetColorAndOpacity(FLinearColor::White);
+				BattleHUD->PassiveStackCnt_4->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayLevel)));
+				BattleHUD->PassiveStackCnt_4->SetVisibility(ESlateVisibility::Visible);
+				BattleHUD->SkillSlot_4_Type = SavedPassiveSkillData.Type;
+			}
 		}
-
-		//2번 슬롯
-		else if (BattleHUD->SkillSlot_2_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_2_Type == EPassiveItemType::None)
+		// Active Skill HUD 갱신
+		else
 		{
-			BattleHUD->Image_Skill_2->SetBrush(SelectedSkillImage->GetBrush());
-			BattleHUD->Image_Skill_2->SetColorAndOpacity(FLinearColor::White);
-
-			int32 DisplayStack = FMath::Min(CurrentStack, 5);
-			BattleHUD->StackCnt_2->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayStack)));
-			BattleHUD->StackCnt_2->SetVisibility(ESlateVisibility::Visible);
-
-			BattleHUD->SkillSlot_2_Type = SavedPassiveSkillData.Type;
-		}
-
-		//3번 슬롯
-		else if (BattleHUD->SkillSlot_3_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_3_Type == EPassiveItemType::None)
-		{
-			BattleHUD->Image_Skill_3->SetBrush(SelectedSkillImage->GetBrush());
-			BattleHUD->Image_Skill_3->SetColorAndOpacity(FLinearColor::White);
-
-			int32 DisplayStack = FMath::Min(CurrentStack, 5);
-			BattleHUD->StackCnt_3->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayStack)));
-			BattleHUD->StackCnt_3->SetVisibility(ESlateVisibility::Visible);
-
-			BattleHUD->SkillSlot_3_Type = SavedPassiveSkillData.Type;
-		}
-
-		//4번 슬롯
-		else if (BattleHUD->SkillSlot_4_Type == SavedPassiveSkillData.Type || BattleHUD->SkillSlot_4_Type == EPassiveItemType::None)
-		{
-			BattleHUD->Image_Skill_4->SetBrush(SelectedSkillImage->GetBrush());
-			BattleHUD->Image_Skill_4->SetColorAndOpacity(FLinearColor::White);
-
-			int32 DisplayStack = FMath::Min(CurrentStack, 5);
-			BattleHUD->StackCnt_4->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayStack)));
-			BattleHUD->StackCnt_4->SetVisibility(ESlateVisibility::Visible);
-
-			BattleHUD->SkillSlot_4_Type = SavedPassiveSkillData.Type;
+			// 1번 슬롯
+			if (BattleHUD->SkillSlot_1_Active == SavedActiveSkillData.Type || BattleHUD->SkillSlot_1_Active == EActiveSkillItemType::None)
+			{
+				if (BattleHUD->Image_Skill_5 && BattleHUD->ActiveStackCnt_1)
+				{
+					BattleHUD->Image_Skill_5->SetBrush(SelectedSkillImage->GetBrush());
+					BattleHUD->Image_Skill_5->SetColorAndOpacity(FLinearColor::White);
+					BattleHUD->ActiveStackCnt_1->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayLevel)));
+					BattleHUD->ActiveStackCnt_1->SetVisibility(ESlateVisibility::Visible);
+				}
+				BattleHUD->SkillSlot_1_Active = SavedActiveSkillData.Type;
+			}
+			// 2번 슬롯
+			else if (BattleHUD->SkillSlot_2_Active == SavedActiveSkillData.Type || BattleHUD->SkillSlot_2_Active == EActiveSkillItemType::None)
+			{
+				if (BattleHUD->Image_Skill_6 && BattleHUD->ActiveStackCnt_2)
+				{
+					BattleHUD->Image_Skill_6->SetBrush(SelectedSkillImage->GetBrush());
+					BattleHUD->Image_Skill_6->SetColorAndOpacity(FLinearColor::White);
+					BattleHUD->ActiveStackCnt_2->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayLevel)));
+					BattleHUD->ActiveStackCnt_2->SetVisibility(ESlateVisibility::Visible);
+				}
+				BattleHUD->SkillSlot_2_Active = SavedActiveSkillData.Type;
+			}
+			// 3번 슬롯
+			else if (BattleHUD->SkillSlot_3_Active == SavedActiveSkillData.Type || BattleHUD->SkillSlot_3_Active == EActiveSkillItemType::None)
+			{
+				if (BattleHUD->Image_Skill_7 && BattleHUD->ActiveStackCnt_3)
+				{
+					BattleHUD->Image_Skill_7->SetBrush(SelectedSkillImage->GetBrush());
+					BattleHUD->Image_Skill_7->SetColorAndOpacity(FLinearColor::White);
+					BattleHUD->ActiveStackCnt_3->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayLevel)));
+					BattleHUD->ActiveStackCnt_3->SetVisibility(ESlateVisibility::Visible);
+				}
+				BattleHUD->SkillSlot_3_Active = SavedActiveSkillData.Type;
+			}
+			// 4번 슬롯
+			else if (BattleHUD->SkillSlot_4_Active == SavedActiveSkillData.Type || BattleHUD->SkillSlot_4_Active == EActiveSkillItemType::None)
+			{
+				if (BattleHUD->Image_Skill_8 && BattleHUD->ActiveStackCnt_4)
+				{
+					BattleHUD->Image_Skill_8->SetBrush(SelectedSkillImage->GetBrush());
+					BattleHUD->Image_Skill_8->SetColorAndOpacity(FLinearColor::White);
+					BattleHUD->ActiveStackCnt_4->SetText(FText::FromString(FString::Printf(TEXT("Lv.%d"), DisplayLevel)));
+					BattleHUD->ActiveStackCnt_4->SetVisibility(ESlateVisibility::Visible);
+				}
+				BattleHUD->SkillSlot_4_Active = SavedActiveSkillData.Type;
+			}
 		}
 		//뷰포트 갱신
 		if (UWorld* World = GetWorld())
