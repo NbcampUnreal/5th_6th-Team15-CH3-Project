@@ -43,7 +43,7 @@ AAI_Monsters::AAI_Monsters()
 void AAI_Monsters::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 	//UE_LOG(LogTemp, Warning, TEXT("[Monster] AI Character has been spawned."));
 
 	SetMovementSpeed(WalkSpeed);

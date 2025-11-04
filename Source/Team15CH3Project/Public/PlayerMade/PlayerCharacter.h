@@ -89,4 +89,6 @@ protected:
 	void SkillR();
 	void UltimateC();
 	// ------------------------------------
+
+	void AddExp(int32 Amount);
 };

@@ -7,7 +7,7 @@
 #include "CharacterStatsComponent.generated.h"
 
 
-class ACharacter; // UCharacterMovementComponent 사용을 위해 전방선언 필요
+class ACharacter;
 
 UCLASS(ClassGroup = (Custom), meta = (BlueprintSpawnableComponent))
 class TEAM15CH3PROJECT_API UCharacterStatsComponent : public UActorComponent
@@ -24,6 +24,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Stats | Progression")
 	void GainExperience(int32 Amount);
+
 
 protected:
 	// 사망 시 호출되는 내부 함수
@@ -44,7 +45,7 @@ public:
 	int32 Experience = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Combat")
-	float AttackDamage = 10.0f;
+	float AttackDamage = 30.0f;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Combat")
 	//float AttackDamageMin = 9;
@@ -52,22 +53,22 @@ public:
 	//float AttackDamageMax = 15;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Combat")
-	float AttackSpeed = 1.0f;
+	float AttackSpeed = 2.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Combat")
 	int32 ProjectileCount = 1;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Resources")
-	float MaxMP = 100.0f;
+	float MaxMP = 300.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats | Resources")
-	float CurrentMP = 100.0f;
+	float CurrentMP = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Resources")
-	float MaxHP = 100.0f;
+	float MaxHP = 300.0f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats | Resources")
-	float CurrentHP = 100.0f;
+	float CurrentHP = 300.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Misc")
 	float MoveSpeed = 600.0f;
