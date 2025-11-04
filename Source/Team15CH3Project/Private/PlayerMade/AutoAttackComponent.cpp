@@ -182,10 +182,10 @@ void UAutoAttackComponent::FireProjectile()
             float CurrentAngle = -HalfAngle + (i * SpreadAngle);
             FinalRotation.Yaw += CurrentAngle;
         }
-
+        APlayerCharacter* OwnerChar = Cast<APlayerCharacter>(GetOwner());
         FActorSpawnParameters Params;
-        Params.Owner = GetOwner();
-        Params.Instigator = GetOwner()->GetInstigator();
+        Params.Owner = OwnerChar;          
+        Params.Instigator = OwnerChar;
 
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn; // 최초생성 충돌 방지용
 

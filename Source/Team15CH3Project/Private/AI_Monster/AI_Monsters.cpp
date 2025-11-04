@@ -8,6 +8,7 @@
 #include "GameFramework/DamageType.h"
 #include "Skill/SkillInventoryComponent.h"
 #include "Components/CapsuleComponent.h" 
+#include "PlayerMade/Projectile.h"
 //추가
 #include "Components/ProgressBar.h" 
 #include "Blueprint/UserWidget.h" 
@@ -183,19 +184,34 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 		SetLifeSpan(3.0f);
 
 		///// 캐릭터 흡혈 패시브 스킬
-		if (DamageCauser)
+		APlayerCharacter* Player = nullptr;
+
+		// DamageCauser가 Projectile이면 Owner 또는 Instigator를 찾아서 Player로 캐스팅
+		if (AProjectile* Projectile = Cast<AProjectile>(DamageCauser))
 		{
-			if (APlayerCharacter* Player = Cast<APlayerCharacter>(DamageCauser))
+			if (AActor* OwnerActor = Projectile->GetOwner())
+				Player = Cast<APlayerCharacter>(OwnerActor);
+			if (!Player && Projectile->GetInstigator())
+				Player = Cast<APlayerCharacter>(Projectile->GetInstigator());
+		}
+		else
+		{
+			Player = Cast<APlayerCharacter>(DamageCauser);
+		}
+
+		if (Player)
+		{
+			if (USkillInventoryComponent* SkillInv = Player->FindComponentByClass<USkillInventoryComponent>())
 			{
-				if (USkillInventoryComponent* SkillInv = Player->FindComponentByClass<USkillInventoryComponent>())
+				if (SkillInv->HasPassiveSkill(EPassiveItemType::BloodAbsorbing))
 				{
-					if (SkillInv->HasPassiveSkill(EPassiveItemType::BloodAbsorbing))
+					if (UCharacterStatsComponent* Stats = Player->FindComponentByClass<UCharacterStatsComponent>())
 					{
-						if (UCharacterStatsComponent* Stats = Player->FindComponentByClass<UCharacterStatsComponent>())
-						{
-							const float HealAmount = Stats->MaxHP * 0.05f;
-							Stats->CurrentHP = FMath::Clamp(Stats->CurrentHP + HealAmount, 0.f, Stats->MaxHP);
-						}
+						const float HealAmount = Stats->MaxHP * 0.02f;
+						Stats->CurrentHP = FMath::Clamp(Stats->CurrentHP + HealAmount, 0.f, Stats->MaxHP);
+
+						UE_LOG(LogTemp, Warning, TEXT("[BloodAbsorbing] Player healed %.1f HP (%.1f / %.1f)"),
+							HealAmount, Stats->CurrentHP, Stats->MaxHP);
 					}
 				}
 			}
