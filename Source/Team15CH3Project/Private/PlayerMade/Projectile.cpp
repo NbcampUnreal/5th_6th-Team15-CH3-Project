@@ -35,6 +35,11 @@ AProjectile::AProjectile()
 void AProjectile::BeginPlay()
 {
     Super::BeginPlay();
+
+    if (!GetOwner() && GetInstigator())
+    {
+        SetOwner(GetInstigator());
+    }
 }
 
 // Overlap 이벤트 처리 함수 구현
@@ -55,6 +60,7 @@ void AProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* Ot
             UE_LOG(LogTemp, Warning, TEXT("Projectile Overlapped Monster: %s. Damage: %f"), *OtherActor->GetName(), Damage);
 
             // 데미지 적용
+            AController* InstigatorController = GetInstigatorController();
             UGameplayStatics::ApplyDamage(OtherActor, Damage, GetInstigatorController(), this, NULL);
         }
 
