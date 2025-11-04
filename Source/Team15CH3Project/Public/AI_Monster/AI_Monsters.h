@@ -40,7 +40,7 @@ public:
 	//끝
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Reward") //몬스터가 죽었을때 드랍하는 경험치 양
-	int32 ExpReward = 20;
+	int32 ExpReward;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fire")
 	TSubclassOf<AMonsterBullet> Bullets;
