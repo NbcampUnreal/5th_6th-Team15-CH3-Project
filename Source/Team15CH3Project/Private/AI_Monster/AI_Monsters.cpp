@@ -7,22 +7,22 @@
 #include "PlayerMade/PlayerCharacter.h"
 #include "GameFramework/DamageType.h"
 #include "Skill/SkillInventoryComponent.h"
-#include "Components/CapsuleComponent.h" 
-//추가
-#include "Components/ProgressBar.h" 
-#include "Blueprint/UserWidget.h" 
-//끝
-
+#include "Components/CapsuleComponent.h" //추가
+#include "Components/ProgressBar.h"
+#include "Blueprint/UserWidget.h" //끝
+#include "AI_Monster/MonsterBullet.h"
+#include "PlayerMade/CharacterStatsComponent.h"
 
 AAI_Monsters::AAI_Monsters()
 {
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AAI_MonsterController::StaticClass();
+
 	UCharacterMovementComponent* Movement = GetCharacterMovement();
 	Movement->bOrientRotationToMovement = true; //키면 캐릭터가 움직이는 방향으로 바라보고 끄면 미끌어 지듯이 바라본다
 	Movement->RotationRate = FRotator(0.0f, 540.0f, 0.0f); //돌아 보는 회전 속도 높으면 갑자기 확 돌아본다
 	Movement->MaxWalkSpeed = WalkSpeed;
-	
+
 	MaxHP = 300.0f;
 	CurrentHP = MaxHP;
 
@@ -31,6 +31,7 @@ AAI_Monsters::AAI_Monsters()
 	AttackCooldown = 1.5f;
 	AttackDamage = 15.f;
 	LastAttackTime = -1000.0f;
+
 	//HP 추가
 	HealthBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarComp"));
 	HealthBarComp->SetupAttachment(GetMesh());
@@ -39,11 +40,9 @@ AAI_Monsters::AAI_Monsters()
 	//HP 추가 끝
 }
 
-
 void AAI_Monsters::BeginPlay()
 {
 	Super::BeginPlay();
-	
 	//UE_LOG(LogTemp, Warning, TEXT("[Monster] AI Character has been spawned."));
 
 	SetMovementSpeed(WalkSpeed);
@@ -53,12 +52,12 @@ void AAI_Monsters::BeginPlay()
 		MeleeCtrl->StartChaseLoop();
 		return;
 	}
-
 	if (ARanged_MonsterController* RangedCtrl = Cast<ARanged_MonsterController>(GetController()))
 	{
 		RangedCtrl->StartChaseLoop();
 		return;
 	}
+
 	//추가
 	UpdateOverheadHP();
 	//끝
@@ -75,23 +74,28 @@ void AAI_Monsters::SetMovementSpeed(float NewSpeed)
 bool AAI_Monsters::CanAttack(APawn* Target) const
 {
 	if (!Target || IsDead()) return false;
+
 	const float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
 	if (Now - LastAttackTime < AttackCooldown) return false;
+
 	const float Dist = FVector::Dist2D(GetActorLocation(), Target->GetActorLocation());
 	return Dist <= AttackRange;
+
 	//UE_LOG(LogTemp, Warning, TEXT("[Attack!!]"));
 }
 
 bool AAI_Monsters::ReangCanAttak(APawn* Target) const
 {
 	if (!Target || IsDead()) return false;
+
 	const float Now = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
 	if (Now - LastAttackTime < AttackCooldown) return false;
+
 	const float Dist = FVector::Dist2D(GetActorLocation(), Target->GetActorLocation());
 	return Dist <= RangeAttackRange;
+
 	//UE_LOG(LogTemp, Warning, TEXT("[Attack!!]"));
 }
-
 
 void AAI_Monsters::PerformAttack(APawn* Target)
 {
@@ -107,9 +111,10 @@ void AAI_Monsters::PerformAttack(APawn* Target)
 		UDamageType::StaticClass()
 	);
 
-	UE_LOG(LogTemp, Warning, TEXT("[Monster] Attack! Target=%s, Damage=%.1f, Dist=%.0f"), *Target->GetName(), AttackDamage, FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()));
-
-
+	UE_LOG(LogTemp, Warning, TEXT("[Monster] Attack! Target=%s, Damage=%.1f, Dist=%.0f"),
+		*Target->GetName(),
+		AttackDamage,
+		FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()));
 }
 
 void AAI_Monsters::BulletAttack(APawn* Target)
@@ -120,42 +125,29 @@ void AAI_Monsters::BulletAttack(APawn* Target)
 	{
 		FVector MuzzleLocation = GetMesh()->GetSocketLocation("FireMuzzle");
 
-		UWorld* world = GetWorld();
-		if (world)
+		if (UWorld* World = GetWorld())
 		{
 			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;
-			SpawnParams.Instigator = GetInstigator();
+			SpawnParams.Owner = this;                 // 총알의 Owner = 몬스터
+			SpawnParams.Instigator = GetInstigator(); // 총알의 Instigator = 몬스터(또는 몬스터 컨트롤러)
 
-			FVector TargetLoc = Target->GetActorLocation() + FVector(0, 0, 50.0f); // 약간 상체 쪽을 향하게
-			FVector Direction = (TargetLoc - MuzzleLocation).GetSafeNormal();
-			FRotator MuzzleRotation = Direction.Rotation();
+			FVector TargetLoc = Target->GetActorLocation() + FVector(0, 0, 50.0f);
+			const FVector Dir = (TargetLoc - MuzzleLocation).GetSafeNormal();
+			const FRotator Rot = Dir.Rotation();
 
-			AMonsterBullet* bullet = world->SpawnActor<AMonsterBullet>(Bullets, MuzzleLocation, MuzzleRotation, SpawnParams);
-			if (bullet)
+			if (AMonsterBullet* Bullet = World->SpawnActor<AMonsterBullet>(Bullets, MuzzleLocation, Rot, SpawnParams))
 			{
-				bullet->FireInDirection(Direction);
+				Bullet->Damage = AttackDamage;     // 총알에 데미지 전달
+				Bullet->FireInDirection(Dir);
+				Bullet->SetLifeSpan(3.0f);         // 필요 시 수명
 			}
 		}
 
 		LastAttackTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
-
-		UGameplayStatics::ApplyDamage(
-			Target,
-			AttackDamage,
-			GetController(),
-			this,
-			UDamageType::StaticClass()
-		);
-
-
-		UE_LOG(LogTemp, Warning, TEXT("[Monster] Attack! Target=%s, Damage=%.1f, Dist=%.0f"), *Target->GetName(), AttackDamage, FVector::Dist2D(GetActorLocation(), Target->GetActorLocation()));
-
 	}
 }
 
-float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent,
-	AController* EventInstigator, AActor* DamageCauser)
+float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
 	const float Applied = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 
@@ -163,6 +155,7 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 
 	CurrentHP = FMath::Clamp(CurrentHP - Applied, 0.f, MaxHP);
 	UE_LOG(LogTemp, Log, TEXT("[Monster] -%.1f HP -> %.1f / %.1f"), Applied, CurrentHP, MaxHP);
+
 	//추가
 	UpdateOverheadHP();
 	//끝
@@ -170,14 +163,19 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 	if (IsDead())
 	{
 
-		/*if (UWorld* World = GetWorld())
+		if (UWorld* World = GetWorld())
 		{
-			if (APlayerCharacter* PC = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
+			if (APlayerCharacter* Player = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(World, 0)))
 			{
-				PC->AddExp(ExpReward);
-				UE_LOG(LogTemp, Warning, TEXT("[Monster] Player0에게 경험치 %d 지급"), ExpReward);
+				// 캐릭터의 StatsComponent 접근
+				if (UCharacterStatsComponent* StatsComp = Player->FindComponentByClass<UCharacterStatsComponent>())
+				{
+					StatsComp->GainExperience(ExpReward);
+					UE_LOG(LogTemp, Warning, TEXT("[Monster] Player에게 경험치 %d 지급 (현재 %d/%d)"),
+						ExpReward, StatsComp->Experience, StatsComp->MaxExperience);
+				}
 			}
-		}*/
+		}
 
 		HandleDeath();
 		SetLifeSpan(3.0f);
@@ -201,6 +199,7 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 			}
 		}
 	}
+
 	return Applied;
 }
 
@@ -213,7 +212,8 @@ void AAI_Monsters::HandleDeath()
 		Cap->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
-//추가 
+
+//추가
 void AAI_Monsters::UpdateOverheadHP()
 {
 	// 위젯 컴포넌트 유효성 검사
@@ -229,7 +229,7 @@ void AAI_Monsters::UpdateOverheadHP()
 			const float HPPercent = (MaxHP > 0.f) ? CurrentHP / MaxHP : 0.f;
 			HPBar->SetPercent(HPPercent);
 
-			// HP가 낮을 때 색상 변경 필요없을 듯 
+			// HP가 낮을 때 색상 변경 필요없을 듯
 			if (HPPercent < 0.3f)
 			{
 				HPBar->SetFillColorAndOpacity(FLinearColor::Red);
@@ -237,4 +237,3 @@ void AAI_Monsters::UpdateOverheadHP()
 		}
 	}
 }
-//끝
