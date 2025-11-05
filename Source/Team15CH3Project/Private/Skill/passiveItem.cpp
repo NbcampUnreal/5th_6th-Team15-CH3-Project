@@ -64,7 +64,7 @@ void ApassiveItem::PassiveSkillApply(APlayerCharacter* Target)
 
 		break;
 	case EPassiveItemType::SprintBoost:
-		Stats->MoveSpeed *= Multiplier;
+		Stats->MoveSpeed = Stats->MoveSpeed * Multiplier;
 
 		break;
 	case EPassiveItemType::BloodAbsorbing: //현재 체력을 흡혈 효과로 회복하는 패시브
