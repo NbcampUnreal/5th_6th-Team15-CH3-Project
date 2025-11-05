@@ -12,6 +12,8 @@
 #include "Blueprint/UserWidget.h" //끝
 #include "AI_Monster/MonsterBullet.h"
 #include "PlayerMade/CharacterStatsComponent.h"
+#include "Particles/ParticleSystem.h"
+#include "PlayerMade/Projectile.h"
 
 AAI_Monsters::AAI_Monsters()
 {
@@ -38,6 +40,7 @@ AAI_Monsters::AAI_Monsters()
 	HealthBarComp->SetRelativeLocation(FVector(0.0f, 0.0f, 300.0f)); // Z축 위치는 예시입니다.
 	HealthBarComp->SetDrawSize(FVector2D(150.0f, 20.0f));
 	//HP 추가 끝
+
 }
 
 void AAI_Monsters::BeginPlay()
@@ -146,6 +149,7 @@ void AAI_Monsters::BulletAttack(APawn* Target)
 		LastAttackTime = GetWorld() ? GetWorld()->GetTimeSeconds() : 0.f;
 	}
 }
+
 
 float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
 {
