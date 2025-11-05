@@ -1,6 +1,7 @@
 #include "Skill/passiveItem.h"
 #include "PlayerMade/CharacterStatsComponent.h"
 #include "PlayerMade/PlayerCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Skill/Actor/Drone.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -65,6 +66,15 @@ void ApassiveItem::PassiveSkillApply(APlayerCharacter* Target)
 		break;
 	case EPassiveItemType::SprintBoost:
 		Stats->MoveSpeed = Stats->MoveSpeed * Multiplier;
+
+		if (APlayerCharacter* PC = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
+				{
+					if (UCharacterMovementComponent* MovementComp = PC->GetCharacterMovement())
+					{
+						//StatComponent에 저장된 새 MoveSpeed 값을 실제 MaxWalkSpeed에 직접 적용
+						MovementComp->MaxWalkSpeed = Stats->MoveSpeed;
+					}
+				}
 
 		break;
 	case EPassiveItemType::BloodAbsorbing: //현재 체력을 흡혈 효과로 회복하는 패시브
