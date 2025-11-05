@@ -122,7 +122,7 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		// 카메라의 Yaw 회전을 기준으로 방향을 계산 (탑다운 시점 이동)
-		// const FRotator Rotation = CameraBoom->GetComponentRotation();
+		//const FRotator Rotation = CameraBoom->GetComponentRotation();
 		//const FRotator Rotation = Controller->GetControlRotation();
 		//const FRotator YawRotation(0, Rotation.Yaw, 0);
 
