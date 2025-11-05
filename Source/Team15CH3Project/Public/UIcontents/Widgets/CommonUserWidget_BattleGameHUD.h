@@ -5,6 +5,8 @@
 #include "Skill/PassiveItem.h"
 #include "Skill/ActiveSkillItem.h"
 #include "Blueprint/UserWidget.h"
+#include "UIcontents/Widgets/CommonUserWidget_Skill.h"
+#include "Skill/SkillInventoryComponent.h"
 
 // HUD 위젯에서 사용되는 컴포넌트
 #include "Components/Image.h"
@@ -110,18 +112,44 @@ public:
     TArray<EActiveSkillItemType> AssignedSkillTypesActive;
 
 
-    //HP & MP 바인드
+    //HP & MP & XP 
     UPROPERTY(meta = (BindWidget))
     UProgressBar* HealthBar;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* HPText;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Health", Meta = (AllowPrivateAccess = "true"))
+    float DisplayedHealthPercent = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Health")
+    float HealthDecreaseSpeed = 5.0f;
+
     UPROPERTY(meta = (BindWidget))
     UProgressBar* MPBar;
 
     UPROPERTY(meta = (BindWidget))
     UTextBlock* MPText;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MP", Meta = (AllowPrivateAccess = "true"))
+    float DisplayedMPPercent = 1.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MP")
+    float MPDecreaseSpeed = 5.0f;
+
+    UPROPERTY(meta = (BindWidget))
+    UProgressBar* XPBar;
+
+    UPROPERTY(meta = (BindWidget))
+    UTextBlock* XPText;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "XP", Meta = (AllowPrivateAccess = "true"))
+    float DisplayedXpPercent = 0.0f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "XP")
+    float XpLerpSpeed = 5.0f;
+
+
 
     //플레이어 캐릭터 참조
     UPROPERTY()
@@ -130,10 +158,11 @@ public:
     //NativeTick 매프레임 업데이트 할 때 사용
     virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
 
+    void ShowSkillSelectUI(UCharacterStatsComponent* StatsComp);
+
     //초기화
     UFUNCTION(BlueprintCallable)
     void InitHUD();
-    
 
     //타이머
     UPROPERTY(meta = (BindWidget))
@@ -142,22 +171,27 @@ public:
     UPROPERTY(VisibleAnywhere, Category = "Game Time")
     float GameTimeElapsed = 0.0f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+    TSubclassOf<UCommonUserWidget_Skill> SkillSelectWidgetClass;
 
-
-
-
-
-
-
-
-
-
+    UPROPERTY()
+    USkillInventoryComponent* SkillInventory = nullptr;
+ 
 private:
 
+    // 스킬 선택
+    int32 LastKnownLevel = 0;
+    bool bIsSkillSelectUIShown = false;
+
+    //승리 또는 패배 후 나올 UI
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<class UUserWidget> DefeatWidgetClass;
-
     bool bIsDefeatUIShown = false;
+
+    //승리 또는 패배 UI
+    UPROPERTY(EditDefaultsOnly, Category = "UI")
+    TSubclassOf<class UUserWidget> WinLoseWidgetClass;
+    bool WinLoseUIShown = false;
 
     TArray<FString> DefeatQuotes = {
         TEXT("The stars say nothing; they merely shine."),

@@ -6,13 +6,42 @@
 #include "PlayerMade/CharacterStatsComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
+#include "UIcontents/Widgets/CommonUserWidget_Skill.h"
 
 void UCommonUserWidget_BattleGameHUD::InitHUD()
 {
-	// 캐릭터 가져오기 & 이걸 이젠 InitHUD를 HUD블루프린트로 연결 
+	//캐릭터 가져오기 & 이걸 이젠 InitHUD를 HUD블루프린트로 연결 
 	if (APlayerCharacter* PlayerChar = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
 		MyPlayerChar = PlayerChar;
+
+		if (UCharacterStatsComponent* StatsComp = PlayerChar->FindComponentByClass<UCharacterStatsComponent>())
+		{
+			LastKnownLevel = StatsComp->Level; //시작 시점 레벨 저장
+			UE_LOG(LogTemp, Warning, TEXT("[HUD] InitHUD - Starting Level: %d"), LastKnownLevel);
+		}
+	}
+}
+
+void UCommonUserWidget_BattleGameHUD::ShowSkillSelectUI(UCharacterStatsComponent* StatsComp)
+{
+
+	// 위젯 생성
+	UCommonUserWidget_Skill* SkillSelectUI = CreateWidget<UCommonUserWidget_Skill>(GetWorld(), SkillSelectWidgetClass);
+
+	//정상 생성
+	UE_LOG(LogTemp, Warning, TEXT("[HUD] SkillSelectUI successfully created!"));
+	SkillSelectUI->AddToViewport(100);
+	bIsSkillSelectUIShown = true;
+
+	//게임 일시정지 및 입력 전환
+	if (APlayerController* PC = GetOwningPlayer())
+	{
+		PC->SetPause(true);
+		PC->SetShowMouseCursor(true);
+		FInputModeUIOnly InputMode;
+		InputMode.SetWidgetToFocus(SkillSelectUI->TakeWidget());
+		PC->SetInputMode(InputMode);
 	}
 }
 
@@ -22,7 +51,6 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 	Super::NativeTick(MyGeometry, DeltaTime);
 
 	if (!MyPlayerChar) return;
-
 
 	//UCharacterStatsComponent에서 스테이트 가져오기
 	UCharacterStatsComponent* StatsComp = MyPlayerChar->FindComponentByClass<UCharacterStatsComponent>();
@@ -34,15 +62,75 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 	float CurrentMP = StatsComp->CurrentMP;
 	float MaxMP = StatsComp->MaxMP;
 
+	int32 Level = StatsComp->Level;
+
+	int32 CurrentXP = StatsComp->Experience;
+	int32 MaxXp = StatsComp->MaxExperience;
+
+	if (Level != LastKnownLevel && Level > 0)
+	{
+		if (Level > LastKnownLevel)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Level Up! %d -> %d"), LastKnownLevel, Level);
+			ShowSkillSelectUI(StatsComp);
+		}
+
+		LastKnownLevel = Level; // 감지 후에 갱신
+	}
+
+	if (XPBar != nullptr)
+	{
+		const float TargetXpPercent = (MaxXp > 0) ? (static_cast<float>(CurrentXP) / MaxXp) : 0.0f;
+
+		DisplayedXpPercent = FMath::FInterpTo(
+			DisplayedXpPercent,            
+			TargetXpPercent,               
+			DeltaTime,                     
+			XpLerpSpeed                    
+		);
+
+		XPBar->SetPercent(DisplayedXpPercent);
+	}
+
+	if (XPText)
+	{
+		FString LevelString = FString::Printf(TEXT("Lv.%d"), Level);
+		XPText->SetText(FText::FromString(LevelString));
+	}
+
 	//바인딩 값을 매 프레임마다 갱신
-	if (HealthBar)
-		HealthBar->SetPercent(MaxHP > 0.f ? CurrentHP / MaxHP : 0.f);
+	const float TargetHPPercent = (MaxHP > 0.f) ? (CurrentHP / MaxHP) : 0.f;
+
+	if (HealthBar != nullptr)
+	{
+		//FInterpTo를 사용하여 부드럽게 보간, DisplayedHealthPercent를 TargetPercent를 향해 천천히 이동시킵니다.
+		DisplayedHealthPercent = FMath::FInterpTo(
+			DisplayedHealthPercent,        // 현재 표시 값 (시작)
+			TargetHPPercent,                 // 실제 HP 퍼센트 값 (목표)
+			DeltaTime,                     // GetWorld()->GetDeltaSeconds()와 동일 (프레임 시간)
+			HealthDecreaseSpeed            // 보간 속도 (헤더에서 정의된 변수)
+		);
+
+		//HP 바 위젯 업데이트, 보간된 DisplayedHealthPercent 값을 위젯에 적용합니다.
+		HealthBar->SetPercent(DisplayedHealthPercent);
+	}
 
 	if (HPText)
 		HPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurrentHP, MaxHP)));
 
-	if (MPBar)
-		MPBar->SetPercent(MaxMP > 0.f ? CurrentMP / MaxMP : 0.f);
+	const float TargetMPPercent = (MaxMP > 0.f) ? (CurrentMP / MaxMP) : 0.f;
+
+	if (MPBar != nullptr)
+	{
+		DisplayedMPPercent = FMath::FInterpTo(
+			DisplayedMPPercent,    
+			TargetMPPercent,
+			DeltaTime,                     
+			MPDecreaseSpeed
+		);
+
+		MPBar->SetPercent(DisplayedMPPercent);
+	}
 
 	if (MPText)
 		MPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurrentMP, MaxMP)));
