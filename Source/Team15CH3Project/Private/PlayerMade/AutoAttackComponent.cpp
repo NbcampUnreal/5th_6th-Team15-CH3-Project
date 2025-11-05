@@ -9,6 +9,7 @@
 #include "TimerManager.h"
 #include "PlayerMade/Projectile.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "AI_Monster/AI_Monsters.h"
 
 UAutoAttackComponent::UAutoAttackComponent()
 {
@@ -141,65 +142,53 @@ void UAutoAttackComponent::FireProjectile()
 
     APawn* Target = FindTarget();
 
-    if (Target)
+    // 🔹 타겟이 없으면 그냥 패스 (다음 Tick에 다시 시도)
+    if (!Target)
+        return;
+
+    // 🔹 유효성 확인
+    if (!Target->IsValidLowLevel() || Target->IsPendingKillPending())
+        return;
+
+
+    // 🔹 몬스터 상태 컴포넌트 확인
+    if (AAI_Monsters* Enemy = Cast<AAI_Monsters>(Target))
     {
-        const UCharacterStatsComponent* EnemyStats = Target->FindComponentByClass<UCharacterStatsComponent>();
-        if (!Target->IsValidLowLevel() || Target->IsPendingKillPending())
+        if (Enemy->IsDead())
         {
-            return;
+            UE_LOG(LogTemp, Warning, TEXT("[AutoAttack] Target is dead. Searching for next target..."));
+            return; // 다음 Tick에서 새 타겟 자동 탐색
         }
-        if (EnemyStats)
-        {
-            if (EnemyStats->IsDead() || EnemyStats->CurrentHP <= 0.0f)
-            {
-                return;
-            }
-        }
-    }
-    else
-    {
-        return; // 타겟 없음
     }
 
+    // 🔹 투사체 발사
     FRotator BaseRotation = GetFireRotation(Target);
-    int32 Count = StatsComponent->ProjectileCount; // 1. 스탯에서 Count를 가져옵니다.
+    int32 Count = StatsComponent->ProjectileCount;
     FVector SpawnLocation = GetOwner()->GetActorLocation() + FVector(0, 0, 50.0f);
 
-    // 2. 여러 발 발사를 위한 각도 계산
-    float SpreadAngle = 10.0f; // 총알 사이의 각도 (10도)
-    float HalfAngle = SpreadAngle * (Count - 1) / 2.0f; // 전체 각도의 절반
+    float SpreadAngle = 10.0f;
+    float HalfAngle = SpreadAngle * (Count - 1) / 2.0f;
 
     for (int32 i = 0; i < Count; ++i)
     {
         FRotator FinalRotation = BaseRotation;
-
         if (Count > 1)
         {
             float CurrentAngle = -HalfAngle + (i * SpreadAngle);
             FinalRotation.Yaw += CurrentAngle;
         }
+
         APlayerCharacter* OwnerChar = Cast<APlayerCharacter>(GetOwner());
         FActorSpawnParameters Params;
-        Params.Owner = OwnerChar;          
+        Params.Owner = OwnerChar;
         Params.Instigator = OwnerChar;
+        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-        Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn; // 최초생성 충돌 방지용
-
-        // 투사체 생성
         AActor* NewActor = World->SpawnActor<AActor>(ProjectileClass, SpawnLocation, FinalRotation, Params);
-
         if (AProjectile* Projectile = Cast<AProjectile>(NewActor))
         {
-            if (Projectile->ProjectileMovement)
-            {
-                Projectile->ProjectileMovement->Velocity = FinalRotation.Vector() * Projectile->ProjectileMovement->InitialSpeed;
-            }
+            Projectile->ProjectileMovement->Velocity = FinalRotation.Vector() * Projectile->ProjectileMovement->InitialSpeed;
             Projectile->InitializeProjectile(StatsComponent->AttackDamage);
-            UE_LOG(LogTemp, Warning, TEXT("Projectile on Spawn test"));
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("Spawned Projectile is not of type AProjectile. Damage value not set."));
         }
     }
 }
