@@ -20,32 +20,35 @@ public:
 
     void SetOrbitTarget(AActor* Target);
 
-    UPROPERTY(EditAnywhere, Category = "Attack") // 여기 코드 재활용
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack") // 여기 코드 재활용
     TSubclassOf<AMonsterBullet> BulletClass;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Mesh")
     UStaticMeshComponent* DroneMesh;
 
     UPROPERTY(EditAnywhere, Category = "Attack")
-    float AttackRadius = 600.f;
+    float AttackRadius = 1000.f;
 
     UPROPERTY(EditAnywhere, Category = "Attack")
     float AttackInterval = 1.0f;
 
     UPROPERTY(EditAnywhere, Category = "Movement")
-    float OrbitRadius = 200.f;
+    float OrbitRadius;
 
     UPROPERTY(EditAnywhere, Category = "Movement")
-    float OrbitSpeed = 50.f; 
+    float OrbitSpeed; 
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drone")
+    float StartAngle;
 
 protected:
     virtual void BeginPlay() override;
 
 private:
     ACharacter* OwnerCharacter;
-    float CurrentAngle = 0.f;
+    float CurrentAngle;
     float LastAttackTime = 0.f;
-    AActor* OrbitTarget = nullptr;
+    AActor* OrbitTarget;
 
     void AttackNearbyEnemies();
 };
