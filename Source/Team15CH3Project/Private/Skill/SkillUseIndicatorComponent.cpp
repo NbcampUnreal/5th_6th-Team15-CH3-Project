@@ -28,7 +28,7 @@ void USkillUseIndicatorComponent::BeginPlay()
 
 		if (SpawnedIndicatorActor)
 		{
-			ShowIndicator();
+			HideIndicator();
 		}
 	}
 }

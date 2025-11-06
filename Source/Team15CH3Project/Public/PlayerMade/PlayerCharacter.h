@@ -6,7 +6,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "PlayerMade/CharacterStatsComponent.h"
+#include "Skill/ActiveSkillItem.h"
 #include "PlayerCharacter.generated.h"
+
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -59,6 +61,12 @@ protected:
 	UInputAction* MoveAction;
 
 	// 스킬 인풋 액션 선언부
+
+	bool bIsSKillIndicatorActive = false;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Skills")
+	class UInputAction* IA_LeftClick;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Skills")
 	class UInputAction* SkillQAction;
 
@@ -75,6 +83,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
 	class UAnimMontage* DeathMontage;
 
+	UPROPERTY()
+	FActiveSkillItemData SelectedActiveSkill;
+
+	// 선택된 액티브 스킬 클래스
+	UPROPERTY()
+	TSubclassOf<AActiveSkillItem> SelectedActiveSkillClass;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -84,6 +99,8 @@ protected:
 	void PlayerIsDead();
 
 	// 스킬 콜백 함수 선언부
+	void OnLeftClick(const FInputActionValue& Value);
+
 	void SkillQ();
 	void SkillE();
 	void SkillR();

@@ -95,12 +95,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		{
 			EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Move);
 		}
+		if (IA_LeftClick)
+		{
+			EnhancedInputComponent->BindAction(IA_LeftClick, ETriggerEvent::Started, this, &APlayerCharacter::OnLeftClick);
+		}
 		if (SkillQAction)
 		{
 			EnhancedInputComponent->BindAction(SkillQAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillQ);
 		}
 		if (SkillEAction)
-		{
+		{ 
 			EnhancedInputComponent->BindAction(SkillEAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillE);
 		}
 		if (SkillRAction)
@@ -147,7 +151,6 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 		// 	GetCharacterMovement()->MaxWalkSpeed = StatsComp->MoveSpeed; //// maxwalkspeed 상태여서 속도에 가속이 적용된상태 -> 속도 일정하도록 
 		// }
 
-
 		//if (!FMath::IsNearlyZero(MovementVector.Y))
 		//{
 		//	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
@@ -160,6 +163,41 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 		//	const FVector RightDirection = FRotator(YawRotation).GetUnitAxis(EAxis::Y);
 		//	AddMovementInput(RightDirection, MovementVector.X);
 		//}
+	}
+}
+
+void APlayerCharacter::OnLeftClick(const FInputActionValue& Value)
+{
+
+	if (bIsSKillIndicatorActive)
+	{
+		if (USkillUseIndicatorComponent* SkillIndicator = FindComponentByClass<USkillUseIndicatorComponent>())
+		{
+			SkillIndicator->HideIndicator();
+			UE_LOG(LogTemp, Warning, TEXT("Indicator OFF by Left Click"));
+		}
+
+		FVector SpawnLocation = SkillUseIndicator->SpawnedIndicatorActor->GetActorLocation();
+		FRotator SpawnRotation = SkillUseIndicator->SpawnedIndicatorActor->GetActorRotation();
+
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+
+		if (SelectedActiveSkillClass)
+		{
+			// 그냥 액터로 Spawn
+			AActor* SpawnedSkill = GetWorld()->SpawnActor<AActor>(
+				SelectedActiveSkillClass,
+				SpawnLocation,
+				SpawnRotation,
+				Params
+			);
+
+			// 4. 선택 초기화
+			bIsSKillIndicatorActive = false;
+			SelectedActiveSkillClass = nullptr;
+		}
 	}
 }
 
@@ -229,6 +267,21 @@ void APlayerCharacter::SkillQ()
 {
 	// 스킬 Q 로직
 	UE_LOG(LogTemp, Warning, TEXT("Skill Q activated!"));
+
+	if (SkillInventory && SkillInventory->ActiveSkillsInv.Num() > 0)
+	{
+		// 0번째 스킬 선택
+		SelectedActiveSkill = SkillInventory->ActiveSkillsInv[0];
+		SelectedActiveSkillClass = SelectedActiveSkill.ActiveItemClass;
+
+		// 인디케이터 켜기
+		if (USkillUseIndicatorComponent* SkillIndicator = FindComponentByClass<USkillUseIndicatorComponent>())
+		{
+			SkillIndicator->ShowIndicator();
+			bIsSKillIndicatorActive = true;
+		}
+	}
+
 }
 
 void APlayerCharacter::SkillE()
