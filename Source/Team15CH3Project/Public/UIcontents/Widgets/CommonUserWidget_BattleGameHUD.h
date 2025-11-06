@@ -168,7 +168,7 @@ public:
     UPROPERTY(meta = (BindWidget))
     class UTextBlock* CurrentTime;
 
-    UPROPERTY(VisibleAnywhere, Category = "Game Time")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Game Time")
     float GameTimeElapsed = 0.0f;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
