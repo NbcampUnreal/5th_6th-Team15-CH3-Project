@@ -36,6 +36,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
     TSubclassOf<APawn> MonsterClassFilter;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+    USoundBase* FireSound;
+
+
     void StopAutoAttack();
 
 private:

@@ -177,9 +177,27 @@ void APlayerCharacter::OnLeftClick(const FInputActionValue& Value)
 			UE_LOG(LogTemp, Warning, TEXT("Indicator OFF by Left Click"));
 		}
 
-		bIsSKillIndicatorActive = false;
-		UE_LOG(LogTemp, Warning, TEXT("Mouse Left Click"));
+		FVector SpawnLocation = SkillUseIndicator->SpawnedIndicatorActor->GetActorLocation();
+		FRotator SpawnRotation = SkillUseIndicator->SpawnedIndicatorActor->GetActorRotation();
 
+		FActorSpawnParameters Params;
+		Params.Owner = this;
+		Params.Instigator = this;
+
+		if (SelectedActiveSkillClass)
+		{
+			// 그냥 액터로 Spawn
+			AActor* SpawnedSkill = GetWorld()->SpawnActor<AActor>(
+				SelectedActiveSkillClass,
+				SpawnLocation,
+				SpawnRotation,
+				Params
+			);
+
+			// 4. 선택 초기화
+			bIsSKillIndicatorActive = false;
+			SelectedActiveSkillClass = nullptr;
+		}
 	}
 }
 
@@ -249,11 +267,6 @@ void APlayerCharacter::SkillQ()
 {
 	// 스킬 Q 로직
 	UE_LOG(LogTemp, Warning, TEXT("Skill Q activated!"));
-
-	//USkillUseIndicatorComponent* SKillUseIndicatorComp = FindComponentByClass<USkillUseIndicatorComponent>();
-	//SKillUseIndicatorComp->ShowIndicator();
-	//UE_LOG(LogTemp, Warning, TEXT("Indicator On by Q"));
-	//bIsSKillIndicatorActive = true;
 
 	if (SkillInventory && SkillInventory->ActiveSkillsInv.Num() > 0)
 	{
