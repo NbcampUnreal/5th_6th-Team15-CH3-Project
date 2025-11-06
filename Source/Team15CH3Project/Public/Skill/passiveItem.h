@@ -49,6 +49,9 @@ struct FPassiveItemData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float PercentStack = 3.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "PassiveSkill")
+	TSubclassOf<class ApassiveItem> PassiveItemClass;
 };
 
 UCLASS()
