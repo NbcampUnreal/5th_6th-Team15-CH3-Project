@@ -35,22 +35,14 @@ void AActiveSkillItem::ActiveSkillApply(class APlayerCharacter* Target)
 	switch (ActiveType)
 	{
 	case EActiveSkillItemType::ShootingGun:
-	{
-		UE_LOG(LogTemp, Warning, TEXT("ActiveSkillApply: ShootingGun"));
-		GetWorld()->SpawnActor<APowerSurgeBullet>(APowerSurgeBullet::StaticClass(), Target->GetActorLocation(), Target->GetActorRotation(), Params);
-	}
 		break;
 	case EActiveSkillItemType::CircleNearbySword:
-
 		break;
 	case EActiveSkillItemType::ShootingLaser:
-		GetWorld()->SpawnActor<AShootingLaser>(AShootingLaser::StaticClass(), Target->GetActorLocation(), Target->GetActorRotation(), Params);
 		break;
 	case EActiveSkillItemType::NapalmAttack:
-		GetWorld()->SpawnActor<ANapalmAttack>(ANapalmAttack::StaticClass(), Target->GetActorLocation(), Target->GetActorRotation(), Params);
 		break;
 	case EActiveSkillItemType::NuclearAttack:
-		GetWorld()->SpawnActor<ANuclearAttack>(ANuclearAttack::StaticClass(), Target->GetActorLocation(), Target->GetActorRotation(), Params);
 		break;
 	default:
 		break;
