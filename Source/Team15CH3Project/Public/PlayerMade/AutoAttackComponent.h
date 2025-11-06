@@ -36,9 +36,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
     TSubclassOf<APawn> MonsterClassFilter;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Attack")
-    bool ShouldAttack;
-
     void StopAutoAttack();
 
 private:

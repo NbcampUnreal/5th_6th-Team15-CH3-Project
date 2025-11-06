@@ -200,14 +200,12 @@ void UAutoAttackComponent::FireProjectile()
 
         // 투사체 생성
         AActor* NewActor = World->SpawnActor<AActor>(ProjectileClass, SpawnLocation, FinalRotation, Params);
-        ShouldAttack = true;
 
         if (AProjectile* Projectile = Cast<AProjectile>(NewActor))
         {
             if (Projectile->ProjectileMovement)
             {
                 Projectile->ProjectileMovement->Velocity = FinalRotation.Vector() * Projectile->ProjectileMovement->InitialSpeed;
-                ShouldAttack = false;
             }
             Projectile->InitializeProjectile(StatsComponent->AttackDamage);
             UE_LOG(LogTemp, Warning, TEXT("Projectile on Spawn test"));
