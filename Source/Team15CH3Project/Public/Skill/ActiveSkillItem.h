@@ -41,6 +41,9 @@ struct FActiveSkillItemData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActiveSkillItem")
 	int32 CoolTime;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkilI")
+	TSubclassOf<AActiveSkillItem> ActiveItemClass;
 };
 
 UCLASS()

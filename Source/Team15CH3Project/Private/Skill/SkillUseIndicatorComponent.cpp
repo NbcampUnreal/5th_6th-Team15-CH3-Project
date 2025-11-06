@@ -8,7 +8,7 @@
 USkillUseIndicatorComponent::USkillUseIndicatorComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-	bIsVisible = true; // 테스트용으로 일단 바로 키게할꺼
+	bIsVisible = false; // 테스트용으로 일단 바로 키게할꺼
 }
 
 void USkillUseIndicatorComponent::BeginPlay()
@@ -28,7 +28,7 @@ void USkillUseIndicatorComponent::BeginPlay()
 
 		if (SpawnedIndicatorActor)
 		{
-			ShowIndicator();
+			HideIndicator();
 		}
 	}
 }

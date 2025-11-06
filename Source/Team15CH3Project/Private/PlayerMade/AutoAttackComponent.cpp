@@ -198,6 +198,11 @@ void UAutoAttackComponent::FireProjectile()
 
         Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn; // 최초생성 충돌 방지용
 
+        if (i == 0)
+        {
+            UGameplayStatics::PlaySoundAtLocation(this, FireSound, GetOwner()->GetActorLocation());
+        }
+
         // 투사체 생성
         AActor* NewActor = World->SpawnActor<AActor>(ProjectileClass, SpawnLocation, FinalRotation, Params);
         ShouldAttack = true;
