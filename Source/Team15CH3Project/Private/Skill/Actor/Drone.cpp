@@ -1,6 +1,7 @@
 #include "Skill/Actor/Drone.h"
 #include "Kismet/GameplayStatics.h"
 #include "AI_Monster/AI_Monsters.h"
+#include "PlayerMade/PlayerCharacter.h"
 
 ADrone::ADrone()
 {
@@ -10,11 +11,18 @@ ADrone::ADrone()
     SetRootComponent(DroneMesh);
 
     DroneMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    static ConstructorHelpers::FClassFinder<AMonsterBullet> BulletBP(TEXT("/Game/SKill/BluePrint/BP_DroneBullet.BP_DroneBullet"));
+    if (BulletBP.Succeeded())
+    {
+        BulletClass = BulletBP.Class;
+    }
 }
 
 void ADrone::BeginPlay()
 {
     Super::BeginPlay();
+    CurrentAngle = StartAngle;
     LastAttackTime = -AttackInterval;
 }
 
@@ -22,20 +30,18 @@ void ADrone::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
 
-    if (!OrbitTarget) return;
+    if (!OrbitTarget)
+    {
+        return;
+    }
 
     CurrentAngle += OrbitSpeed * DeltaTime;
-    if (CurrentAngle >= 360.f) CurrentAngle -= 360.f;
+    float TotalAngle = StartAngle + CurrentAngle;
+    float Radians = FMath::DegreesToRadians(TotalAngle);
 
-    float Rad = FMath::DegreesToRadians(CurrentAngle);
-    FVector Offset = FVector(FMath::Cos(Rad) * OrbitRadius, FMath::Sin(Rad) * OrbitRadius, 50.f);
-    SetActorLocation(OrbitTarget->GetActorLocation() + Offset);
-
-    if (GetWorld()->GetTimeSeconds() - LastAttackTime >= AttackInterval)
-    {
-        AttackNearbyEnemies();
-        LastAttackTime = GetWorld()->GetTimeSeconds();
-    }
+    FVector OrbitOffset(FMath::Cos(Radians) * OrbitRadius, FMath::Sin(Radians) * OrbitRadius, 150.f);
+    FVector TargetLoc = OrbitTarget->GetActorLocation() + OrbitOffset;
+    SetActorLocation(TargetLoc);
 }
 void ADrone::AttackNearbyEnemies()
 {
@@ -73,4 +79,5 @@ void ADrone::AttackNearbyEnemies()
 void ADrone::SetOrbitTarget(AActor* Target)
 {
     OrbitTarget = Target;
+    OwnerCharacter = Cast<APlayerCharacter>(Target);
 }

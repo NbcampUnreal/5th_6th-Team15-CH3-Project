@@ -1,6 +1,8 @@
 #include "Skill/passiveItem.h"
 #include "PlayerMade/CharacterStatsComponent.h"
 #include "PlayerMade/PlayerCharacter.h"
+#include "AI_Monster/AI_Monsters.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Skill/Actor/Drone.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -9,17 +11,17 @@ ApassiveItem::ApassiveItem()
 	PassiveSkillData.StackCnt = 0;
 	PassiveSkillData.MaxStackCnt = 5;
 	PassiveType = EPassiveItemType::None;
+
+	static ConstructorHelpers::FClassFinder<ADrone> DroneBP(TEXT("/Game/SKill/BluePrint/BP_Drone"));
+	if (DroneBP.Succeeded())
+	{
+		DroneClass = DroneBP.Class;
+	}
 }
 
 void ApassiveItem::BeginPlay()
 {
 	Super::BeginPlay();
-
-	APlayerCharacter* Player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	if (Player)
-	{
-		PassiveSkillApply(Player);
-	}
 }
 
 void ApassiveItem::PassiveSkillApply(APlayerCharacter* Target)
@@ -36,7 +38,7 @@ void ApassiveItem::PassiveSkillApply(APlayerCharacter* Target)
 
 	const float Multiplier = 1.0f + (PassiveSkillData.PercentStack / 100.0f) * PassiveSkillData.StackCnt;
 
-	switch (PassiveType) // 스탯 계산 수식 다시 정립 필요
+	switch (PassiveType)
 	{
 	case EPassiveItemType::AttackPowerBoost:
 		Stats->AttackDamage *= Multiplier;
@@ -60,11 +62,31 @@ void ApassiveItem::PassiveSkillApply(APlayerCharacter* Target)
 
 		break;
 	case EPassiveItemType::ExpBoost: //경험치 획득량 증가 적AI 에서 받아올게 필요
+	{
+		TArray<AActor*> FoundMonsters;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAI_Monsters::StaticClass(), FoundMonsters);
 
+		for (AActor* Actor : FoundMonsters)
+		{
+			if (AAI_Monsters* AI_Monster = Cast<AAI_Monsters>(Actor))
+			{
+				AI_Monster->ExpReward *= Multiplier;
+			}
+		}
+		break;
+	}
 
 		break;
 	case EPassiveItemType::SprintBoost:
 		Stats->MoveSpeed = Stats->MoveSpeed * Multiplier;
+
+		if (APlayerCharacter* PC = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerPawn(GetWorld(), 0)))
+				{
+					if (UCharacterMovementComponent* MovementComp = PC->GetCharacterMovement())
+					{
+						MovementComp->MaxWalkSpeed = Stats->MoveSpeed;
+					}
+				}
 
 		break;
 	case EPassiveItemType::BloodAbsorbing: //현재 체력을 흡혈 효과로 회복하는 패시브
@@ -73,30 +95,54 @@ void ApassiveItem::PassiveSkillApply(APlayerCharacter* Target)
 		break;
 	case EPassiveItemType::AutomaticAttackDrone:
 	{
-		if (!DroneClass) break;
-
 		UWorld* World = GetWorld();
-		if (!World) break;
+		if (!World || !DroneClass) return;
 
-		int32 MaxDrone = 5;
+		APlayerCharacter* Player = Cast<APlayerCharacter>(Target);
+		if (!Player) return;
 
-		TArray<AActor*> ExistingDrones;
-		UGameplayStatics::GetAllActorsOfClass(World, DroneClass, ExistingDrones);
-		int32 DronesToSpawn = FMath::Clamp(PassiveSkillData.StackCnt - ExistingDrones.Num(), 0, MaxDrone);
+		// 현재 플레이어가 가진 드론만 찾아서 세기
+		TArray<AActor*> FoundDrones;
+		UGameplayStatics::GetAllActorsOfClass(World, ADrone::StaticClass(), FoundDrones);
 
-		for (int32 i = 0; i < DronesToSpawn; ++i)
+		TArray<ADrone*> OwnedDrones;
+		for (AActor* Actor : FoundDrones)
 		{
-			FVector SpawnLoc = GetActorLocation();
+			ADrone* Drone = Cast<ADrone>(Actor);
+			if (Drone && Drone->GetOwner() == Player)
+			{
+				OwnedDrones.Add(Drone);
+			}
+		}
+
+		const int32 MaxDrones = 5;
+		const int32 DesiredCount = FMath::Clamp(PassiveSkillData.StackCnt, 1, MaxDrones);
+		const int32 CurrentCount = OwnedDrones.Num();
+
+		UE_LOG(LogTemp, Warning, TEXT("[DroneSpawn] 현재 %d개, 목표 %d개"), CurrentCount, DesiredCount);
+
+		for (int32 i = CurrentCount; i < DesiredCount; ++i)
+		{
+			FVector SpawnLoc = Player->GetActorLocation() + FVector(0, 0, 150);
 			FRotator SpawnRot = FRotator::ZeroRotator;
 
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this; // 스킬 소유자
-			SpawnParams.Instigator = Cast<APawn>(GetOwner());
+			FActorSpawnParameters Params;
+			Params.Owner = Player;
+			Params.Instigator = Player;
 
-			ADrone* NewDrone = World->SpawnActor<ADrone>(DroneClass, SpawnLoc, SpawnRot, SpawnParams);
-			if (NewDrone)
+			ADrone* Drone = World->SpawnActor<ADrone>(DroneClass, SpawnLoc, SpawnRot, Params);
+			if (Drone)
 			{
-				NewDrone->SetOrbitTarget(this);
+				Drone->SetOrbitTarget(Player);
+				Drone->StartAngle = i * (360.f / DesiredCount);
+				Drone->OrbitRadius = 200.f;
+				Drone->OrbitSpeed = 60.f;
+
+				UE_LOG(LogTemp, Warning, TEXT("[DroneSpawn] 드론 %d 생성, StartAngle=%.1f"), i, Drone->StartAngle);
+			}
+			else
+			{
+				UE_LOG(LogTemp, Error, TEXT("[DroneSpawn] 드론 생성 실패!"));
 			}
 		}
 		break;

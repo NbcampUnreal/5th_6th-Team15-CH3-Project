@@ -42,8 +42,10 @@ struct FActiveSkillItemData
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActiveSkillItem")
 	int32 CoolTime;
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkilI")
-	TSubclassOf<AActiveSkillItem> ActiveItemClass;
+	TSubclassOf<AActor> ActiveItemClass;
+
 };
 
 UCLASS()
@@ -56,13 +58,12 @@ public:
 	
 	virtual void BeginPlay() override;
 	void ActiveSkillApply(class APlayerCharacter* Target);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill|Effect")
-	TSubclassOf<APowerSurgeBullet> PowerSurgeBulletEffectActorClass;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	FActiveSkillItemData ActiveSkillData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	EActiveSkillItemType ActiveType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
+	AActor* SKillActor;
 };
