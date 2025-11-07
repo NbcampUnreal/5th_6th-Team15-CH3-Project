@@ -180,7 +180,10 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 					if (UCharacterStatsComponent* Stats = Player->FindComponentByClass<UCharacterStatsComponent>())
 					{
 						const float HealAmount = Stats->MaxHP * 0.02f;
+						const float MPAmount = Stats->MaxMP * 0.02f;
+
 						Stats->CurrentHP = FMath::Clamp(Stats->CurrentHP + HealAmount, 0.f, Stats->MaxHP);
+						Stats->CurrentMP = FMath::Clamp(Stats->CurrentMP + MPAmount, 0.f, Stats->MaxMP);
 						UE_LOG(LogTemp, Warning, TEXT("[BloodAbsorbing] Player healed %.1f HP (%.1f / %.1f)"),
 							HealAmount, Stats->CurrentHP, Stats->MaxHP);
 					}

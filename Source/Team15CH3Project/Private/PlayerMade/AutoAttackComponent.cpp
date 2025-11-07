@@ -213,7 +213,6 @@ void UAutoAttackComponent::FireProjectile()
                 Projectile->ProjectileMovement->Velocity = FinalRotation.Vector() * Projectile->ProjectileMovement->InitialSpeed;
             }
             Projectile->InitializeProjectile(StatsComponent->AttackDamage);
-            UE_LOG(LogTemp, Warning, TEXT("Projectile on Spawn test"));
         }
         else
         {

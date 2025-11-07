@@ -64,8 +64,6 @@ void AProjectile::OnBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* Ot
             UGameplayStatics::ApplyDamage(OtherActor, Damage, GetInstigatorController(), this, NULL);
         }
 
-        UE_LOG(LogTemp, Warning, TEXT("Test2"));
-
         // Overlap 발생 후 파괴 (다른 모든 대상과의 충돌 시 파괴)
         Destroy();
     }

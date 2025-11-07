@@ -104,16 +104,16 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			EnhancedInputComponent->BindAction(SkillQAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillQ);
 		}
 		if (SkillEAction)
-		{ 
+		{
 			EnhancedInputComponent->BindAction(SkillEAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillE);
 		}
 		if (SkillRAction)
 		{
 			EnhancedInputComponent->BindAction(SkillRAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillR);
 		}
-		if (UltimateCAction)
+		if (SkillCAction)
 		{
-			EnhancedInputComponent->BindAction(UltimateCAction, ETriggerEvent::Started, this, &APlayerCharacter::UltimateC);
+			EnhancedInputComponent->BindAction(SkillCAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillC);
 		}
 	}
 }
@@ -168,37 +168,89 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 void APlayerCharacter::OnLeftClick(const FInputActionValue& Value)
 {
+	if (!bIsSKillIndicatorActive || !SkillUseIndicator || !SelectedActiveSkillClass || !StatsComponent)
+		return;
 
-	if (bIsSKillIndicatorActive)
+	const FName SkillName = SelectedActiveSkill.ActiveItemClass
+		? SelectedActiveSkill.ActiveItemClass->GetFName()
+		: FName("UnknownSkill");
+
+	// === 쿨타임 관리용 static 맵 ===
+	static TMap<FName, bool> SkillCooldownMap;
+	static TMap<FName, FTimerHandle> SkillCooldownTimerMap;
+
+	// 쿨타임 중이면 리턴
+	if (SkillCooldownMap.FindRef(SkillName))
 	{
-		if (USkillUseIndicatorComponent* SkillIndicator = FindComponentByClass<USkillUseIndicatorComponent>())
-		{
-			SkillIndicator->HideIndicator();
-			UE_LOG(LogTemp, Warning, TEXT("Indicator OFF by Left Click"));
-		}
-
-		FVector SpawnLocation = SkillUseIndicator->SpawnedIndicatorActor->GetActorLocation();
-		FRotator SpawnRotation = SkillUseIndicator->SpawnedIndicatorActor->GetActorRotation();
-
-		FActorSpawnParameters Params;
-		Params.Owner = this;
-		Params.Instigator = this;
-
-		if (SelectedActiveSkillClass)
-		{
-			// 그냥 액터로 Spawn
-			AActor* SpawnedSkill = GetWorld()->SpawnActor<AActor>(
-				SelectedActiveSkillClass,
-				SpawnLocation,
-				SpawnRotation,
-				Params
-			);
-
-			// 4. 선택 초기화
-			bIsSKillIndicatorActive = false;
-			SelectedActiveSkillClass = nullptr;
-		}
+		UE_LOG(LogTemp, Warning, TEXT("[Skill] %s is on cooldown!"), *SkillName.ToString());
+		return;
 	}
+
+	// === 마나 확인 ===
+	if (StatsComponent->CurrentMP < SelectedActiveSkill.UseMana)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Skill] Not enough MP for %s! (%d / %d)"),
+			*SkillName.ToString(),
+			(int32)StatsComponent->CurrentMP,
+			(int32)SelectedActiveSkill.UseMana);
+		return;
+	}
+
+	// === 마나 소모 ===
+	StatsComponent->CurrentMP -= SelectedActiveSkill.UseMana;
+	UE_LOG(LogTemp, Warning, TEXT("[Skill] %s used (Mana -%d, Remain: %d)"),
+		*SkillName.ToString(),
+		(int32)SelectedActiveSkill.UseMana,
+		(int32)StatsComponent->CurrentMP);
+
+	// === 쿨타임 시작 ===
+	SkillCooldownMap.Add(SkillName, true);
+
+	FTimerHandle& CooldownTimer = SkillCooldownTimerMap.FindOrAdd(SkillName);
+
+	GetWorld()->GetTimerManager().SetTimer(
+		CooldownTimer,
+		[this, SkillName]()
+		{
+			// 쿨타임 종료 처리
+			if (UWorld* World = GetWorld())
+			{
+				World->GetTimerManager().ClearTimer(SkillCooldownTimerMap[SkillName]);
+				SkillCooldownTimerMap.Remove(SkillName);
+			}
+			SkillCooldownMap.Add(SkillName, false);
+			UE_LOG(LogTemp, Warning, TEXT("[Skill] %s cooldown ended."), *SkillName.ToString());
+		},
+		SelectedActiveSkill.CoolTime,
+		false
+	);
+
+	// === 스킬 스폰 ===
+	FVector SpawnLocation = SkillUseIndicator->SpawnedIndicatorActor->GetActorLocation();
+	SpawnLocation.Z += 10.0f;
+	FRotator SpawnRotation = SkillUseIndicator->SpawnedIndicatorActor->GetActorRotation();
+
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.Instigator = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	AActiveSkillItem* SpawnedSkill = GetWorld()->SpawnActor<AActiveSkillItem>(
+		SelectedActiveSkillClass, SpawnLocation, SpawnRotation, Params);
+
+	if (SpawnedSkill && SelectedActiveSkillClass)
+	{
+		SpawnedSkill->ActiveType = SelectedActiveSkill.Type;
+		SpawnedSkill->ActiveSkillData = SelectedActiveSkill;
+		SpawnedSkill->ActiveSkillApply(this);
+	}
+
+	// === 인디케이터 숨김 ===
+	if (USkillUseIndicatorComponent* Indicator = FindComponentByClass<USkillUseIndicatorComponent>())
+	{
+		Indicator->HideIndicator();
+	}
+	bIsSKillIndicatorActive = false;
 }
 
 float APlayerCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
@@ -288,17 +340,59 @@ void APlayerCharacter::SkillE()
 {
 	// 스킬 E 로직
 	UE_LOG(LogTemp, Warning, TEXT("Skill E activated!"));
+
+	if (SkillInventory && SkillInventory->ActiveSkillsInv.Num() > 0)
+	{
+		// 1번째 스킬 선택
+		SelectedActiveSkill = SkillInventory->ActiveSkillsInv[1];
+		SelectedActiveSkillClass = SelectedActiveSkill.ActiveItemClass;
+
+		// 인디케이터 켜기
+		if (USkillUseIndicatorComponent* SkillIndicator = FindComponentByClass<USkillUseIndicatorComponent>())
+		{
+			SkillIndicator->ShowIndicator();
+			bIsSKillIndicatorActive = true;
+		}
+	}
 }
 
 void APlayerCharacter::SkillR()
 {
 	// 스킬 R 로직
 	UE_LOG(LogTemp, Warning, TEXT("Skill R activated!"));
+
+	if (SkillInventory && SkillInventory->ActiveSkillsInv.Num() > 0)
+	{
+		// 2번째 스킬 선택
+		SelectedActiveSkill = SkillInventory->ActiveSkillsInv[2];
+		SelectedActiveSkillClass = SelectedActiveSkill.ActiveItemClass;
+
+		// 인디케이터 켜기
+		if (USkillUseIndicatorComponent* SkillIndicator = FindComponentByClass<USkillUseIndicatorComponent>())
+		{
+			SkillIndicator->ShowIndicator();
+			bIsSKillIndicatorActive = true;
+		}
+	}
 }
 
-void APlayerCharacter::UltimateC()
+void APlayerCharacter::SkillC()
 {
 	// 궁극기 C 로직
-	UE_LOG(LogTemp, Warning, TEXT("Ultimate C activated!"));
+	UE_LOG(LogTemp, Warning, TEXT("Skill C activated!"));
+
+	if (SkillInventory && SkillInventory->ActiveSkillsInv.Num() > 0)
+	{
+		// 3번째 스킬 선택
+		SelectedActiveSkill = SkillInventory->ActiveSkillsInv[3];
+		SelectedActiveSkillClass = SelectedActiveSkill.ActiveItemClass;
+
+		// 인디케이터 켜기
+		if (USkillUseIndicatorComponent* SkillIndicator = FindComponentByClass<USkillUseIndicatorComponent>())
+		{
+			SkillIndicator->ShowIndicator();
+			bIsSKillIndicatorActive = true;
+		}
+	}
 }
 // ------------------------------------
