@@ -58,7 +58,7 @@ struct FActiveSkillItemData
 	FTimerHandle CooldownTimerHandle;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	float PercentStack = 5.0f;
+	float PercentStack = 10.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkilI")
 	TSubclassOf<AActor> ActiveItemClass;

@@ -10,6 +10,7 @@ AActiveSkillItem::AActiveSkillItem()
 {
 	ActiveSkillData.StackCnt = 0;
 	ActiveSkillData.MaxStackCnt = 5;
+	ActiveSkillData.PercentStack = 10.f;
 	ActiveType = EActiveSkillItemType::None;
 }
 
@@ -18,10 +19,6 @@ void AActiveSkillItem::BeginPlay()
 	Super::BeginPlay();
 
 	APlayerCharacter* Player = Cast<APlayerCharacter>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	if (Player)
-	{
-		ActiveSkillApply(Player);
-	}
 }
 
 void AActiveSkillItem::ActiveSkillApply(class APlayerCharacter* Target)
@@ -32,6 +29,12 @@ void AActiveSkillItem::ActiveSkillApply(class APlayerCharacter* Target)
 	FActorSpawnParameters Params;
 	Params.Owner = Target;
 	Params.Instigator = Target;
+
+	if (!ActiveSkillData.ActiveItemClass)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ActiveSkillApply: ActiveItemClass is NULL"));
+		return;
+	}
 
 	if (ActiveSkillData.StackCnt < ActiveSkillData.MaxStackCnt)
 	{
