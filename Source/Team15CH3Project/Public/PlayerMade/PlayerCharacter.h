@@ -77,7 +77,7 @@ protected:
 	class UInputAction* SkillRAction;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Input|Skills")
-	class UInputAction* UltimateCAction;
+	class UInputAction* SkillCAction;
 	// ------------------------------------
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Animation")
@@ -104,7 +104,7 @@ protected:
 	void SkillQ();
 	void SkillE();
 	void SkillR();
-	void UltimateC();
+	void SkillC();
 	// ------------------------------------
 
 	void AddExp(int32 Amount);
