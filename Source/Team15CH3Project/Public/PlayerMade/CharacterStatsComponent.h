@@ -51,7 +51,7 @@ public:
 	int32 Experience = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Combat")
-	float AttackDamage = 30.0f;
+	float AttackDamage = 80.0f;
 
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Combat")
 	//float AttackDamageMin = 9;
@@ -59,7 +59,7 @@ public:
 	//float AttackDamageMax = 15;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Combat")
-	float AttackSpeed = 2.0f;
+	float AttackSpeed = 4.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Combat")
 	int32 ProjectileCount = 1;
