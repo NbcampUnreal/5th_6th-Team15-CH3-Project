@@ -46,6 +46,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fire")
 	TSubclassOf<AMonsterBullet> Bullets;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KillCount")
+	// [추가] 모든 몬스터가 공유하는 전역 킬 카운터 (정의는 .cpp에서 1회)
+	int32 S_TotalKillCount;
+	//[추가]
+	int32 KillCount;
+
+
 protected:
 
 	virtual void BeginPlay() override;
@@ -73,6 +80,13 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, Category = "AI|Combat")
 	class UParticleSystem* HitEffect;
+
+	// [추가] 중복 증가 방지용 플래그 (죽음 처리 1회만 카운트)
+	UPROPERTY(VisibleAnywhere, Category = "Kill")
+	bool bKillCounted = false;
+
+	// [추가] 모든 몬스터가 공유하는 전역 킬 카운터 (정의는 .cpp에서 1회)
+	int32 S_TotalKillCount;
 
 	//virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
