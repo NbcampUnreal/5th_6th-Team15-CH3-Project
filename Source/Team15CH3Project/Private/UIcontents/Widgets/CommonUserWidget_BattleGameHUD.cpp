@@ -173,7 +173,7 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 	if (MPText)
 		MPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurrentMP, MaxMP)));
 
-	if (KillCount >= 1)
+	if (KillCount >= 150)
 	{
 		if (WinLoseUIShown)
 		{

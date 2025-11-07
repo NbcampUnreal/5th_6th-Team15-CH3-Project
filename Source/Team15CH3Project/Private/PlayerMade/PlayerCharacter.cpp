@@ -238,7 +238,7 @@ void APlayerCharacter::OnLeftClick(const FInputActionValue& Value)
 	AActiveSkillItem* SpawnedSkill = GetWorld()->SpawnActor<AActiveSkillItem>(
 		SelectedActiveSkillClass, SpawnLocation, SpawnRotation, Params);
 
-	if (SpawnedSkill)
+	if (SpawnedSkill && SelectedActiveSkillClass)
 	{
 		SpawnedSkill->ActiveType = SelectedActiveSkill.Type;
 		SpawnedSkill->ActiveSkillData = SelectedActiveSkill;
