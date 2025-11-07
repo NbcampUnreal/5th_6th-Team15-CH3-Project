@@ -33,6 +33,8 @@ AAI_Monsters::AAI_Monsters()
 	AttackCooldown = 1.5f;
 	AttackDamage = 15.f;
 	LastAttackTime = -1000.0f;
+	S_TotalKillCount = 0;
+	KillCount = 0;
 
 	//HP 추가
 	HealthBarComp = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarComp"));
@@ -166,6 +168,12 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 
 	if (IsDead())
 	{
+		if (!bKillCounted)//--------------------------------------킬 담당 코드----------------------
+		{
+			++KillCount;
+			bKillCounted = true;
+			UE_LOG(LogTemp, Warning, TEXT("[Kill] TotalKill=%d"), KillCount);
+		}//-------------------------------------------------------킬 담당 코드-----------------------
 
 		if (UWorld* World = GetWorld())
 		{
