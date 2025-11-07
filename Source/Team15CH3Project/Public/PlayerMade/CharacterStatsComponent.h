@@ -34,6 +34,12 @@ protected:
 
 	void ApplyLevelUpStats();
 
+
+	// 무적 관련 함수
+	void StartInvincibility();
+
+	void EndInvincibility();
+
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Stats | Progression")
 	int32 Level = 1;
@@ -73,4 +79,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stats | Misc")
 	float MoveSpeed = 600.0f;
 
+	UPROPERTY(EditAnywhere, Category = "Stats | Misc ")
+	float InvincibleDuration = 1.0f;
+
+	bool bIsInvincible = false;
+
+	FTimerHandle InvincibleTimerHandle;
 };
