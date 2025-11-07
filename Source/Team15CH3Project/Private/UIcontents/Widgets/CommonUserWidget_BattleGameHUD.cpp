@@ -13,14 +13,14 @@
 
 void UCommonUserWidget_BattleGameHUD::InitHUD()
 {
-	//Ä³¸¯ÅÍ °¡Á®¿À±â & ÀÌ°É ÀÌÁ¨ InitHUD¸¦ HUDºí·çÇÁ¸°Æ®·Î ¿¬°á 
+	//ìºë¦­í„° ê°€ì ¸ì˜¤ê¸° & ì´ê±¸ ì´ì   InitHUDë¥¼ HUDë¸”ë£¨í”„ë¦°íŠ¸ë¡œ ì—°ê²° 
 	if (APlayerCharacter* PlayerChar = Cast<APlayerCharacter>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)))
 	{
 		MyPlayerChar = PlayerChar;
 
 		if (UCharacterStatsComponent* StatsComp = PlayerChar->FindComponentByClass<UCharacterStatsComponent>())
 		{
-			LastKnownLevel = StatsComp->Level; //½ÃÀÛ ½ÃÁ¡ ·¹º§ ÀúÀå
+			LastKnownLevel = StatsComp->Level; //ì‹œì‘ ì‹œì  ë ˆë²¨ ì €ì¥
 			UE_LOG(LogTemp, Warning, TEXT("[HUD] InitHUD - Starting Level: %d"), LastKnownLevel);
 		}
 	}
@@ -32,7 +32,7 @@ void UCommonUserWidget_BattleGameHUD::CheckKillCount()
 	if (AAI_Monsters::GetTotalKillCount() != KillCount)
 	{
 		KillCount = AAI_Monsters::GetTotalKillCount();
-		UpdateDisplay(KillCount); //UI °»½Å
+		UpdateDisplay(KillCount); //UI ê°±ì‹ 
 	}
 }
 
@@ -40,19 +40,19 @@ void UCommonUserWidget_BattleGameHUD::UpdateDisplay(int32 NewKillCount)
 {
 	if (KillCountText)
 	{
-		//¹ÙÀÎµùµÈ UTextBlock¿¡ Å³ Ä«¿îÆ® ÅØ½ºÆ® Àû¿ë
+		//ë°”ì¸ë”©ëœ UTextBlockì— í‚¬ ì¹´ìš´íŠ¸ í…ìŠ¤íŠ¸ ì ìš©
 		FText DisplayText = FText::Format(FText::FromString(TEXT("KILLS: {0}")), FText::AsNumber(NewKillCount));
 		KillCountText->SetText(DisplayText);
 	}
 }
-//HUD À§Á¬ÀÌ »ı¼ºµÇ°í ÃÊ±âÈ­µÉ ¶§ È£ÃâµÇ´Â ÇÔ¼ö
+//HUD ìœ„ì ¯ì´ ìƒì„±ë˜ê³  ì´ˆê¸°í™”ë  ë•Œ í˜¸ì¶œë˜ëŠ” í•¨ìˆ˜
 void UCommonUserWidget_BattleGameHUD::NativeConstruct()
 {
 	Super::NativeConstruct();
 
-	UpdateDisplay(KillCount); //HUD¿¡ »ı¼ºµÉ ¶§ Áï½Ã È­¸é¿¡ Å³ Ä«¿îÆ® Ç¥½Ã, 0.3ÃÊÀÇ °ø¹éÀ» ¹æÁö
+	UpdateDisplay(KillCount); //HUDì— ìƒì„±ë  ë•Œ ì¦‰ì‹œ í™”ë©´ì— í‚¬ ì¹´ìš´íŠ¸ í‘œì‹œ, 0.3ì´ˆì˜ ê³µë°±ì„ ë°©ì§€
 
-	//º¯°æ °¨Áö Å³ Ä«¿îÆ® °»½Å
+	//ë³€ê²½ ê°ì§€ í‚¬ ì¹´ìš´íŠ¸ ê°±ì‹ 
 	GetWorld()->GetTimerManager().SetTimer(
 		KillCountUpdateTimerHandle,
 		this,
@@ -65,15 +65,15 @@ void UCommonUserWidget_BattleGameHUD::NativeConstruct()
 void UCommonUserWidget_BattleGameHUD::ShowSkillSelectUI(UCharacterStatsComponent* StatsComp)
 {
 
-	// À§Á¬ »ı¼º
+	// ìœ„ì ¯ ìƒì„±
 	UCommonUserWidget_Skill* SkillSelectUI = CreateWidget<UCommonUserWidget_Skill>(GetWorld(), SkillSelectWidgetClass);
 
-	//Á¤»ó »ı¼º
+	//ì •ìƒ ìƒì„±
 	UE_LOG(LogTemp, Warning, TEXT("[HUD] SkillSelectUI successfully created!"));
 	SkillSelectUI->AddToViewport(100);
 	bIsSkillSelectUIShown = true;
 
-	//°ÔÀÓ ÀÏ½ÃÁ¤Áö ¹× ÀÔ·Â ÀüÈ¯
+	//ê²Œì„ ì¼ì‹œì •ì§€ ë° ì…ë ¥ ì „í™˜
 	if (APlayerController* PC = GetOwningPlayer())
 	{
 		PC->SetPause(true);
@@ -91,7 +91,7 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 
 	if (!MyPlayerChar) return;
 
-	//UCharacterStatsComponent¿¡¼­ ½ºÅ×ÀÌÆ® °¡Á®¿À±â
+	//UCharacterStatsComponentì—ì„œ ìŠ¤í…Œì´íŠ¸ ê°€ì ¸ì˜¤ê¸°
 	UCharacterStatsComponent* StatsComp = MyPlayerChar->FindComponentByClass<UCharacterStatsComponent>();
 	if (!StatsComp) return;
 
@@ -114,7 +114,7 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 			ShowSkillSelectUI(StatsComp);
 		}
 
-		LastKnownLevel = Level; // °¨Áö ÈÄ¿¡ °»½Å
+		LastKnownLevel = Level; // ê°ì§€ í›„ì— ê°±ì‹ 
 	}
 
 	if (XPBar != nullptr)
@@ -137,17 +137,17 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 		XPText->SetText(FText::FromString(LevelString));
 	}
 
-	//¹ÙÀÎµù °ªÀ» ¸Å ÇÁ·¹ÀÓ¸¶´Ù °»½Å
+	//ë°”ì¸ë”© ê°’ì„ ë§¤ í”„ë ˆì„ë§ˆë‹¤ ê°±ì‹ 
 	const float TargetHPPercent = (MaxHP > 0.f) ? (CurrentHP / MaxHP) : 0.f;
 
 	if (HealthBar != nullptr)
 	{
-		//FInterpTo¸¦ »ç¿ëÇÏ¿© ºÎµå·´°Ô º¸°£, DisplayedHealthPercent¸¦ TargetPercent¸¦ ÇâÇØ ÃµÃµÈ÷ ÀÌµ¿½ÃÅµ´Ï´Ù.
+		//FInterpToë¥¼ ì‚¬ìš©í•˜ì—¬ ë¶€ë“œëŸ½ê²Œ ë³´ê°„, DisplayedHealthPercentë¥¼ TargetPercentë¥¼ í–¥í•´ ì²œì²œíˆ ì´ë™ì‹œí‚µë‹ˆë‹¤.
 		DisplayedHealthPercent = FMath::FInterpTo(
-			DisplayedHealthPercent,        // ÇöÀç Ç¥½Ã °ª (½ÃÀÛ)
-			TargetHPPercent,                 // ½ÇÁ¦ HP ÆÛ¼¾Æ® °ª (¸ñÇ¥)
-			DeltaTime,                     // GetWorld()->GetDeltaSeconds()¿Í µ¿ÀÏ (ÇÁ·¹ÀÓ ½Ã°£)
-			HealthDecreaseSpeed            // º¸°£ ¼Óµµ (Çì´õ¿¡¼­ Á¤ÀÇµÈ º¯¼ö)
+			DisplayedHealthPercent,        // í˜„ì¬ í‘œì‹œ ê°’ (ì‹œì‘)
+			TargetHPPercent,                 // ì‹¤ì œ HP í¼ì„¼íŠ¸ ê°’ (ëª©í‘œ)
+			DeltaTime,                     // GetWorld()->GetDeltaSeconds()ì™€ ë™ì¼ (í”„ë ˆì„ ì‹œê°„)
+			HealthDecreaseSpeed            // ë³´ê°„ ì†ë„ (í—¤ë”ì—ì„œ ì •ì˜ëœ ë³€ìˆ˜)
 		);
 
 		HealthBar->SetPercent(DisplayedHealthPercent);
@@ -173,7 +173,7 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 	if (MPText)
 		MPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurrentMP, MaxMP)));
 
-	if (KillCount >= 150)
+	if (KillCount >= 1000)
 	{
 		if (WinLoseUIShown)
 		{
@@ -187,7 +187,7 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 
 			if (WinLoseUI)
 			{
-				//ÅØ½ºÆ® º¯°æ
+				//í…ìŠ¤íŠ¸ ë³€ê²½
 				if (UTextBlock* WinLoseText = Cast<UTextBlock>(WinLoseUI->GetWidgetFromName(TEXT("CommonTextBlock_WinLose"))))
 				{
 					WinLoseText->SetText(FText::FromString(TEXT("Win")));
@@ -200,7 +200,7 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 					WinLoseDelayTimerHandle,
 					this,
 					&UCommonUserWidget_BattleGameHUD::HandleWinLoseDelay,
-					1.5f, // 3ÃÊ ÈÄ Delay UI Ç¥½Ã ¹× °ÔÀÓ Á¤Áö
+					1.5f, // 3ì´ˆ í›„ Delay UI í‘œì‹œ ë° ê²Œì„ ì •ì§€
 					false
 				);
 			}
@@ -210,36 +210,36 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 
 	if (CurrentHP > 0.0f)
 	{
-		//°æ°ú ½Ã°£ ´©Àû
+		//ê²½ê³¼ ì‹œê°„ ëˆ„ì 
 		GameTimeElapsed += DeltaTime;
 
-		//½Ã°£ ¾÷µ¥ÀÌÆ®
+		//ì‹œê°„ ì—…ë°ì´íŠ¸
 		if (CurrentTime)
 		{
 			int32 TotalSeconds = FMath::FloorToInt(GameTimeElapsed);
 			int32 Minutes = TotalSeconds / 60;
 			int32 Seconds = TotalSeconds % 60;
 
-			//"00:00" ÇüÅÂ·Î Æ÷¸ËÆÃÇÕ´Ï´Ù.
+			//"00:00" í˜•íƒœë¡œ í¬ë§·íŒ…í•©ë‹ˆë‹¤.
 			FString TimeString = FString::Printf(TEXT("%02d:%02d"), Minutes, Seconds);
 			CurrentTime->SetText(FText::FromString(TimeString));
 		}
 	}
-	else//(CurrentHP <= 0.0f ÀÏ ¶§)
+	else//(CurrentHP <= 0.0f ì¼ ë•Œ)
 	{
-		if (WinLoseUIShown) //ÀÌ¹Ì UI°¡ Ç¥½ÃµÇ¾úÀ¸¸é ¹İÈ¯
+		if (WinLoseUIShown) //ì´ë¯¸ UIê°€ í‘œì‹œë˜ì—ˆìœ¼ë©´ ë°˜í™˜
 		{
 			return;
 		}
 
-		if (WinLoseWidgetClass) //UI Å¬·¡½º°¡ ¼³Á¤µÇ¾î ÀÖÀ¸¸é
+		if (WinLoseWidgetClass) //UI í´ë˜ìŠ¤ê°€ ì„¤ì •ë˜ì–´ ìˆìœ¼ë©´
 		{
 
 			UUserWidget* WinLoseUI = CreateWidget<UUserWidget>(GetWorld(), WinLoseWidgetClass);
 			
 			if (WinLoseUI)
 			{
-				//ÅØ½ºÆ® º¯°æ
+				//í…ìŠ¤íŠ¸ ë³€ê²½
 				if (UTextBlock* WinLoseText = Cast<UTextBlock>(WinLoseUI->GetWidgetFromName(TEXT("CommonTextBlock_WinLose"))))
 				{
 					WinLoseText->SetText(FText::FromString(TEXT("LOSE")));
@@ -252,7 +252,7 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 					WinLoseDelayTimerHandle,
 					this,
 					&UCommonUserWidget_BattleGameHUD::HandleWinLoseDelay,
-					1.5f, // 3ÃÊ ÈÄ Delay UI Ç¥½Ã ¹× °ÔÀÓ Á¤Áö
+					1.5f, // 3ì´ˆ í›„ Delay UI í‘œì‹œ ë° ê²Œì„ ì •ì§€
 					false
 				);
 			}
@@ -265,7 +265,7 @@ void UCommonUserWidget_BattleGameHUD::HandleWinLoseDelay()
 {
 	AAI_Monsters::ResetTotalKillCount();
 
-	//DelayWidgetClass¸¦ »ı¼º
+	//DelayWidgetClassë¥¼ ìƒì„±
 	if (DelayWidgetClass)
 	{
 		UUserWidget* DelayUI = CreateWidget<UUserWidget>(GetWorld(), DelayWidgetClass);
