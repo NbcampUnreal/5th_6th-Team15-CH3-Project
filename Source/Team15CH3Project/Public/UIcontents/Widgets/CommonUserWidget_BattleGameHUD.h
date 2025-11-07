@@ -148,8 +148,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "XP")
     float XpLerpSpeed = 5.0f;
-
-
+	//Kill Count
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* KillCountText;
 
     //플레이어 캐릭터 참조
     UPROPERTY()
@@ -157,6 +158,9 @@ public:
 
     //NativeTick 매프레임 업데이트 할 때 사용
     virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
+
+    // NativeConstruct는 초기 설정용으로 사용
+    virtual void NativeConstruct() override;
 
     void ShowSkillSelectUI(UCharacterStatsComponent* StatsComp);
 
@@ -178,6 +182,12 @@ public:
     USkillInventoryComponent* SkillInventory = nullptr;
  
 private:
+
+	FTimerHandle KillCountUpdateTimerHandle;
+    //주기적으로 호출 될 함수
+   // void CheckKillCount();
+	// UI 업데이트 함수
+    void UpdateDisplay(int32 NewKillCount);
 
     // 스킬 선택
     int32 LastKnownLevel = 0;

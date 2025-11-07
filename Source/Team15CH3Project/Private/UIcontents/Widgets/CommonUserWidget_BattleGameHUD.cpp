@@ -7,6 +7,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Blueprint/UserWidget.h"
 #include "UIcontents/Widgets/CommonUserWidget_Skill.h"
+#include "AI_Monster/AI_Monsters.h"
 
 void UCommonUserWidget_BattleGameHUD::InitHUD()
 {
@@ -21,6 +22,29 @@ void UCommonUserWidget_BattleGameHUD::InitHUD()
 			UE_LOG(LogTemp, Warning, TEXT("[HUD] InitHUD - Starting Level: %d"), LastKnownLevel);
 		}
 	}
+}
+
+//void UCommonUserWidget_BattleGameHUD::CheckKillCount()
+//{
+//	int32 CurrentKillCount = AAI_Monsters::GetTotalKillCount();
+//
+//		//값이 변경 되면 디스플레이 업데이트
+//		UpdateDisplay(CurrentKillCount)
+//}
+
+void UCommonUserWidget_BattleGameHUD::UpdateDisplay(int32 NewKillCount)
+{
+	if (KillCountText)
+	{
+		FText DisplayText = FText::Format(FText::FromString(TEXT("KILLS: {0}")), FText::AsNumber(NewKillCount));
+		KillCountText->SetText(DisplayText);
+	}
+}
+//HUD 위젯이 생성되고 초기화될 때 호출되는 함수
+void UCommonUserWidget_BattleGameHUD::NativeConstruct()
+{
+	Super::NativeConstruct();
+
 }
 
 void UCommonUserWidget_BattleGameHUD::ShowSkillSelectUI(UCharacterStatsComponent* StatsComp)
