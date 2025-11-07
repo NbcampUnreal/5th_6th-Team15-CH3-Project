@@ -168,36 +168,30 @@ void APlayerCharacter::Move(const FInputActionValue& Value)
 
 void APlayerCharacter::OnLeftClick(const FInputActionValue& Value)
 {
-
-	if (bIsSKillIndicatorActive)
 	{
-		if (USkillUseIndicatorComponent* SkillIndicator = FindComponentByClass<USkillUseIndicatorComponent>())
-		{
-			SkillIndicator->HideIndicator();
-			UE_LOG(LogTemp, Warning, TEXT("Indicator OFF by Left Click"));
-		}
-
 		FVector SpawnLocation = SkillUseIndicator->SpawnedIndicatorActor->GetActorLocation();
+		SpawnLocation.Z += 10.0f;
 		FRotator SpawnRotation = SkillUseIndicator->SpawnedIndicatorActor->GetActorRotation();
 
 		FActorSpawnParameters Params;
 		Params.Owner = this;
 		Params.Instigator = this;
+		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		if (SelectedActiveSkillClass)
 		{
-			// 그냥 액터로 Spawn
-			AActor* SpawnedSkill = GetWorld()->SpawnActor<AActor>(
-				SelectedActiveSkillClass,
-				SpawnLocation,
-				SpawnRotation,
-				Params
-			);
+			AActiveSkillItem* SpawnedSkill = GetWorld()->SpawnActor<AActiveSkillItem>(
+				SelectedActiveSkillClass, SpawnLocation, SpawnRotation, Params);
 
-			// 4. 선택 초기화
-			bIsSKillIndicatorActive = false;
-			SelectedActiveSkillClass = nullptr;
+			if (SpawnedSkill)
+			{
+				SpawnedSkill->ActiveType = SelectedActiveSkill.Type;
+				SpawnedSkill->ActiveSkillData = SelectedActiveSkill;
+				SpawnedSkill->ActiveSkillApply(this);
+			}
 		}
+		SkillUseIndicator->HideIndicator();
+		bIsSKillIndicatorActive = false;
 	}
 }
 
