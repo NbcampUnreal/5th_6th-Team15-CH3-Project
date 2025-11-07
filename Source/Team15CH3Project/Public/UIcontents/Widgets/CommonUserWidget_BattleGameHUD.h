@@ -148,8 +148,9 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "XP")
     float XpLerpSpeed = 5.0f;
-
-
+	//Kill Count
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* KillCountText;
 
     //플레이어 캐릭터 참조
     UPROPERTY()
@@ -157,6 +158,9 @@ public:
 
     //NativeTick 매프레임 업데이트 할 때 사용
     virtual void NativeTick(const FGeometry& MyGeometry, float DeltaTime) override;
+
+    // NativeConstruct는 초기 설정용으로 사용
+    virtual void NativeConstruct() override;
 
     void ShowSkillSelectUI(UCharacterStatsComponent* StatsComp);
 
@@ -178,22 +182,32 @@ public:
     USkillInventoryComponent* SkillInventory = nullptr;
  
 private:
+    //=Kill=
+	FTimerHandle KillCountUpdateTimerHandle;
+    //주기적으로 호출 될 함수
+    void CheckKillCount();
+	// UI업데이트 함수
+    void UpdateDisplay(int32 NewKillCount);
+    int32 KillCount = 0;
 
     // 스킬 선택
     int32 LastKnownLevel = 0;
     bool bIsSkillSelectUIShown = false;
 
-    //승리 또는 패배 후 나올 UI
+    //승리 또는 패배 후 딜레이 후 나타나는 UI
     UPROPERTY(EditDefaultsOnly, Category = "UI")
-    TSubclassOf<class UUserWidget> DefeatWidgetClass;
-    bool bIsDefeatUIShown = false;
+    TSubclassOf<class UUserWidget> DelayWidgetClass;
+    bool Delay = false;
+    FTimerHandle WinLoseDelayTimerHandle;
+    UFUNCTION()
+    void HandleWinLoseDelay();
 
     //승리 또는 패배 UI
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<class UUserWidget> WinLoseWidgetClass;
     bool WinLoseUIShown = false;
 
-    TArray<FString> DefeatQuotes = {
+    TArray<FString> String = {
         TEXT("The stars say nothing; they merely shine."),
         TEXT("The universe is vast, but meaning is always made by humans."),
         TEXT("A signal came in the silence, and then nothing happened."),

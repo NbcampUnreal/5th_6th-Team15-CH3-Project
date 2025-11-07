@@ -4,6 +4,10 @@
 #include "PlayerMade/CharacterStatsComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
+
 // Sets default values
 UCharacterStatsComponent::UCharacterStatsComponent()
 {
@@ -14,20 +18,34 @@ UCharacterStatsComponent::UCharacterStatsComponent()
 // 데미지 및 사망 로직
 // ====================================================================
 
-// 데미지 처리 함수
 float UCharacterStatsComponent::TakeDamage(float DamageAmount)
 {
-    // 이미 사망했으면 데미지 처리 및 Die() 호출을 중복방지
     if (IsDead())
+        return 0.0f;
+
+    // 무적 상태면 데미지 무시
+    if (bIsInvincible)
     {
+        UE_LOG(LogTemp, Warning, TEXT("[Stats] Damage ignored (invincible)."));
         return 0.0f;
     }
 
+    // 정상 데미지 처리
     CurrentHP -= DamageAmount;
-
     UE_LOG(LogTemp, Warning, TEXT("[Stats] Damage Taken: %.2f, Current HP: %.2f"), DamageAmount, CurrentHP);
 
-    // 사망 체크
+    if (HitSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(
+            this,
+            HitSound,
+            GetOwner()->GetActorLocation()
+        );
+    }
+
+    // 무적 시작
+    StartInvincibility();
+
     if (CurrentHP <= 0.0f)
     {
         CurrentHP = 0.0f;
@@ -35,6 +53,30 @@ float UCharacterStatsComponent::TakeDamage(float DamageAmount)
     }
 
     return DamageAmount;
+}
+
+void UCharacterStatsComponent::StartInvincibility()
+{
+    if (UWorld* World = GetWorld())
+    {
+        bIsInvincible = true;
+        UE_LOG(LogTemp, Warning, TEXT("[Stats] Invincibility started for %.2f seconds"), InvincibleDuration);
+
+        // 일정 시간 후 자동 해제
+        World->GetTimerManager().SetTimer(
+            InvincibleTimerHandle,
+            this,
+            &UCharacterStatsComponent::EndInvincibility,
+            InvincibleDuration,
+            false
+        );
+    }
+}
+
+void UCharacterStatsComponent::EndInvincibility()
+{
+    bIsInvincible = false;
+    UE_LOG(LogTemp, Warning, TEXT("[Stats] Invincibility ended."));
 }
 
 // 사망 처리 함수 
