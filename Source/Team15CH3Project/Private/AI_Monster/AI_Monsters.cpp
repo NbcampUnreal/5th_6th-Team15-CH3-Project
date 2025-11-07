@@ -171,6 +171,7 @@ float AAI_Monsters::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 		if (!bKillCounted)//--------------------------------------킬 담당 코드----------------------
 		{
 			++KillCount;
+			S_TotalKillCount += KillCount;
 			bKillCounted = true;
 			UE_LOG(LogTemp, Warning, TEXT("[Kill] TotalKill=%d"), KillCount);
 		}//-------------------------------------------------------킬 담당 코드-----------------------
