@@ -76,20 +76,6 @@ void ANuclearAttacks::Tick(float DeltaTime)
 	CurrentXScale += GrowSpeed * DeltaTime; // 장판 캐스팅
 	CastingMeshOut->SetRelativeScale3D(FVector(CurrentXScale, CurrentXScale, 0.002f));
 
-	if (bShowDamageRadius)
-	{
-		DrawDebugSphere(
-			GetWorld(),
-			GetActorLocation(),
-			DamageRadius,
-			32,
-			FColor::Red,
-			false,  // 지속시간
-			0.f,    // LifeTime
-			0,      // DepthPriority
-			2.f     // Thickness
-		);
-	}
 
 	if (CurrentXScale >= MaxXScale)
 	{
