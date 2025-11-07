@@ -85,4 +85,7 @@ public:
 	bool bIsInvincible = false;
 
 	FTimerHandle InvincibleTimerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound")
+	USoundBase* HitSound;
 };

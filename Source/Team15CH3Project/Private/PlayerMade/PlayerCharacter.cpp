@@ -104,7 +104,7 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			EnhancedInputComponent->BindAction(SkillQAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillQ);
 		}
 		if (SkillEAction)
-		{ 
+		{
 			EnhancedInputComponent->BindAction(SkillEAction, ETriggerEvent::Started, this, &APlayerCharacter::SkillE);
 		}
 		if (SkillRAction)

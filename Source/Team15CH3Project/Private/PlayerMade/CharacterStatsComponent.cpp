@@ -6,6 +6,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Kismet/GameplayStatics.h"
+
 // Sets default values
 UCharacterStatsComponent::UCharacterStatsComponent()
 {
@@ -31,6 +33,15 @@ float UCharacterStatsComponent::TakeDamage(float DamageAmount)
     // 정상 데미지 처리
     CurrentHP -= DamageAmount;
     UE_LOG(LogTemp, Warning, TEXT("[Stats] Damage Taken: %.2f, Current HP: %.2f"), DamageAmount, CurrentHP);
+
+    if (HitSound)
+    {
+        UGameplayStatics::PlaySoundAtLocation(
+            this,
+            HitSound,
+            GetOwner()->GetActorLocation()
+        );
+    }
 
     // 무적 시작
     StartInvincibility();
