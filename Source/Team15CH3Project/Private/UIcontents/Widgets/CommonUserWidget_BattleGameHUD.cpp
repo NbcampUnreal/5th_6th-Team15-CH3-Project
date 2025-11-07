@@ -8,6 +8,8 @@
 #include "Blueprint/UserWidget.h"
 #include "UIcontents/Widgets/CommonUserWidget_Skill.h"
 #include "AI_Monster/AI_Monsters.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 
 void UCommonUserWidget_BattleGameHUD::InitHUD()
 {
@@ -24,18 +26,21 @@ void UCommonUserWidget_BattleGameHUD::InitHUD()
 	}
 }
 
-//void UCommonUserWidget_BattleGameHUD::CheckKillCount()
-//{
-//	int32 CurrentKillCount = AAI_Monsters::GetTotalKillCount();
-//
-//		//값이 변경 되면 디스플레이 업데이트
-//		UpdateDisplay(CurrentKillCount)
-//}
+void UCommonUserWidget_BattleGameHUD::CheckKillCount()
+{
+
+	if (AAI_Monsters::GetTotalKillCount() != KillCount)
+	{
+		KillCount = AAI_Monsters::GetTotalKillCount();
+		UpdateDisplay(KillCount); //UI 갱신
+	}
+}
 
 void UCommonUserWidget_BattleGameHUD::UpdateDisplay(int32 NewKillCount)
 {
 	if (KillCountText)
 	{
+		//바인딩된 UTextBlock에 킬 카운트 텍스트 적용
 		FText DisplayText = FText::Format(FText::FromString(TEXT("KILLS: {0}")), FText::AsNumber(NewKillCount));
 		KillCountText->SetText(DisplayText);
 	}
@@ -45,6 +50,16 @@ void UCommonUserWidget_BattleGameHUD::NativeConstruct()
 {
 	Super::NativeConstruct();
 
+	UpdateDisplay(KillCount); //HUD에 생성될 때 즉시 화면에 킬 카운트 표시, 0.3초의 공백을 방지
+
+	//변경 감지 킬 카운트 갱신
+	GetWorld()->GetTimerManager().SetTimer(
+		KillCountUpdateTimerHandle,
+		this,
+		&UCommonUserWidget_BattleGameHUD::CheckKillCount,
+		0.3f,
+		true
+	);
 }
 
 void UCommonUserWidget_BattleGameHUD::ShowSkillSelectUI(UCharacterStatsComponent* StatsComp)
@@ -135,7 +150,6 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 			HealthDecreaseSpeed            // 보간 속도 (헤더에서 정의된 변수)
 		);
 
-		//HP 바 위젯 업데이트, 보간된 DisplayedHealthPercent 값을 위젯에 적용합니다.
 		HealthBar->SetPercent(DisplayedHealthPercent);
 	}
 
@@ -159,6 +173,41 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 	if (MPText)
 		MPText->SetText(FText::FromString(FString::Printf(TEXT("%.0f / %.0f"), CurrentMP, MaxMP)));
 
+	if (KillCount >= 1)
+	{
+		if (WinLoseUIShown)
+		{
+			return;
+		}
+
+		if (WinLoseWidgetClass)
+		{
+
+			UUserWidget* WinLoseUI = CreateWidget<UUserWidget>(GetWorld(), WinLoseWidgetClass);
+
+			if (WinLoseUI)
+			{
+				//텍스트 변경
+				if (UTextBlock* WinLoseText = Cast<UTextBlock>(WinLoseUI->GetWidgetFromName(TEXT("CommonTextBlock_WinLose"))))
+				{
+					WinLoseText->SetText(FText::FromString(TEXT("Win")));
+				}
+
+				WinLoseUI->AddToViewport();
+				WinLoseUIShown = true;
+
+				GetWorld()->GetTimerManager().SetTimer(
+					WinLoseDelayTimerHandle,
+					this,
+					&UCommonUserWidget_BattleGameHUD::HandleWinLoseDelay,
+					1.5f, // 3초 후 Delay UI 표시 및 게임 정지
+					false
+				);
+			}
+		}
+		return;
+	}
+
 	if (CurrentHP > 0.0f)
 	{
 		//경과 시간 누적
@@ -178,34 +227,53 @@ void UCommonUserWidget_BattleGameHUD::NativeTick(const FGeometry& MyGeometry, fl
 	}
 	else//(CurrentHP <= 0.0f 일 때)
 	{
-		if (bIsDefeatUIShown)
+		if (WinLoseUIShown) //이미 UI가 표시되었으면 반환
 		{
 			return;
 		}
 
-		if (DefeatWidgetClass)
+		if (WinLoseWidgetClass) //UI 클래스가 설정되어 있으면
 		{
-			//순수 블루프린트 위젯이므로 UUserWidget으로 생성합니다.
-			UUserWidget* DefeatUI = CreateWidget<UUserWidget>(GetWorld(), DefeatWidgetClass);
 
-			if (DefeatUI)
+			UUserWidget* WinLoseUI = CreateWidget<UUserWidget>(GetWorld(), WinLoseWidgetClass);
+			
+			if (WinLoseUI)
 			{
-				//랜덤 문구 선택 및 함수 호출
-				FString QuoteToDisplay = FString();
-				if (DefeatQuotes.Num() > 0)
+				//텍스트 변경
+				if (UTextBlock* WinLoseText = Cast<UTextBlock>(WinLoseUI->GetWidgetFromName(TEXT("CommonTextBlock_WinLose"))))
 				{
-					int32 RandomIndex = FMath::RandRange(0, DefeatQuotes.Num() - 1);
-					QuoteToDisplay = DefeatQuotes[RandomIndex];
+					WinLoseText->SetText(FText::FromString(TEXT("LOSE")));
 				}
 
-				FString FunctionCallString = FString::Printf(TEXT("%s %s"), TEXT("SetDefeatQuoteBP"), *QuoteToDisplay);
+				WinLoseUI->AddToViewport();
+				WinLoseUIShown = true;
 
-				DefeatUI->CallFunctionByNameWithArguments(*FunctionCallString, *GLog, nullptr, true);
-
-				DefeatUI->AddToViewport();
-				bIsDefeatUIShown = true;
+				GetWorld()->GetTimerManager().SetTimer(
+					WinLoseDelayTimerHandle,
+					this,
+					&UCommonUserWidget_BattleGameHUD::HandleWinLoseDelay,
+					1.5f, // 3초 후 Delay UI 표시 및 게임 정지
+					false
+				);
 			}
 		}
 		return;
 	}
+}
+
+void UCommonUserWidget_BattleGameHUD::HandleWinLoseDelay()
+{
+	AAI_Monsters::ResetTotalKillCount();
+
+	//DelayWidgetClass를 생성
+	if (DelayWidgetClass)
+	{
+		UUserWidget* DelayUI = CreateWidget<UUserWidget>(GetWorld(), DelayWidgetClass);
+		if (DelayUI)
+		{
+			DelayUI->AddToViewport(10000);
+			Delay = true;
+		}
+	}
+	GetWorld()->GetTimerManager().ClearTimer(WinLoseDelayTimerHandle);
 }
