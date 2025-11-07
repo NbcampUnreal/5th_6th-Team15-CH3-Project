@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Skill/Base_item.h"
+#include "TimerManager.h"
 #include "Skill/Actor/PowerSurgeBullet.h"
 #include "ActiveSkillItem.generated.h"
 
@@ -46,11 +47,18 @@ struct FActiveSkillItemData
 	int32 MaxCoolTime;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActiveSkillItem")
+	bool bIsCoolingDown = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActiveSkillItem")
 	bool UseingSkill;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActiveSkillItem")
 	int32 UseMana;
 
+	FTimerHandle CooldownTimerHandle;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float PercentStack = 5.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "SkilI")
 	TSubclassOf<AActor> ActiveItemClass;
@@ -67,12 +75,13 @@ public:
 	
 	virtual void BeginPlay() override;
 	void ActiveSkillApply(class APlayerCharacter* Target);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	FActiveSkillItemData ActiveSkillData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
 	EActiveSkillItemType ActiveType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Skill")
-	AActor* SKillActor;
+private:
+	FTimerHandle CooldownTimerHandle;
 };

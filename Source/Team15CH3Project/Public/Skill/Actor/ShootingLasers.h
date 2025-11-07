@@ -12,7 +12,6 @@ class TEAM15CH3PROJECT_API AShootingLasers : public AActiveSkillItem
 public:
 	AShootingLasers();
 
-protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 
