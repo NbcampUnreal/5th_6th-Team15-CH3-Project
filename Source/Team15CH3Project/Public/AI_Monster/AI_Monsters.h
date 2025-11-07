@@ -86,7 +86,7 @@ private:
 	bool bKillCounted = false;
 
 	// [추가] 모든 몬스터가 공유하는 전역 킬 카운터 (정의는 .cpp에서 1회)
-	int32 S_TotalKillCount;
+	//int32 S_TotalKillCount;
 
 	//virtual float TakeDamage(float DamageAmount, struct FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 
