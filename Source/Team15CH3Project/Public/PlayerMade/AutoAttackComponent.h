@@ -23,6 +23,12 @@ protected:
     // UActorComponent의 표준 함수 오버라이드
     virtual void BeginPlay() override;
 
+    virtual void TickComponent(
+        float DeltaTime,
+        enum ELevelTick TickType,
+        FActorComponentTickFunction* ThisTickFunction
+    ) override;
+
 public:
     // BP에서 설정할 투사체 클래스
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attack")
@@ -60,4 +66,6 @@ private:
 
     // 공격 속도에 따른 발사 주기 계산
     float CalculateAttackInterval() const;
+
+    float LastAttackSpeed = 0.0f;
 };

@@ -220,3 +220,23 @@ void UAutoAttackComponent::FireProjectile()
         }
     }
 }
+
+void UAutoAttackComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    if (!StatsComponent || !GetWorld())
+        return;
+
+    // 공격속도 변경 감지
+    if (!FMath::IsNearlyEqual(StatsComponent->AttackSpeed, LastAttackSpeed))
+    {
+        LastAttackSpeed = StatsComponent->AttackSpeed;
+
+        // 타이머 갱신
+        GetWorld()->GetTimerManager().ClearTimer(AttackTimerHandle);
+        StartAutoAttack();
+
+        UE_LOG(LogTemp, Warning, TEXT("[AutoAttack] AttackSpeed changed → Timer restarted (%.2f)"), StatsComponent->AttackSpeed);
+    }
+}
