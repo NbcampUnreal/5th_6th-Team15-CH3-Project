@@ -52,21 +52,6 @@ void AShootingLasers::Tick(float DeltaTime)
 	CurrentScale += GrowSpeed * DeltaTime;
 	CastingMeshOut->SetRelativeScale3D(FVector(CurrentScale, CurrentScale, 0.001f));
 
-	if (bShowDamageRadius)
-	{
-		DrawDebugSphere(
-			GetWorld(),
-			GetActorLocation(),
-			DamageRadius,
-			32,
-			FColor::Red,
-			false,  // 지속시간
-			0.f,    // LifeTime
-			0,      // DepthPriority
-			2.f     // Thickness
-		);
-	}
-
 	if (CurrentScale >= MaxScale)
 	{
 		Shoting();
