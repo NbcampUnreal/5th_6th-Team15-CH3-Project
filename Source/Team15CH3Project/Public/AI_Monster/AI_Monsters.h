@@ -22,7 +22,7 @@ public:
 	void BulletAttack(APawn* Target);
 	bool IsDead() const { return CurrentHP <= 0.f; }
 	UPROPERTY(EditAnyWhere, Category = "AI")
-	float WalkSpeed = 400.0f; // AI 몬스터 속도값을 정해주는 기능.
+	float WalkSpeed = 450.0f; // AI 몬스터 속도값을 정해주는 기능.
 	UPROPERTY(EditAnyWhere, Category = "AI")
 	float RunSpeed = 500.0f;
 	//추가
