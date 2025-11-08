@@ -265,15 +265,40 @@ void UCommonUserWidget_BattleGameHUD::HandleWinLoseDelay()
 {
 	AAI_Monsters::ResetTotalKillCount();
 
-	//DelayWidgetClass를 생성
+	if (String.Num() > 0)
+	{
+		int32 RandomIndex = FMath::RandRange(0, String.Num() - 1);
+		QuoteToDisplay = String[RandomIndex];
+	}
+
+	// DelayWidgetClass를 생성
 	if (DelayWidgetClass)
 	{
 		UUserWidget* DelayUI = CreateWidget<UUserWidget>(GetWorld(), DelayWidgetClass);
 		if (DelayUI)
 		{
+			//TextBlock 변경
+			UTextBlock* TextBlock = Cast<UTextBlock>(DelayUI->GetWidgetFromName(TEXT("CommonTextBlock_DelayUI")));
+			if (TextBlock)
+			{
+				TextBlock->SetText(FText::FromString(QuoteToDisplay));
+			}
+
+			// UI를 화면에 추가
 			DelayUI->AddToViewport(10000);
 			Delay = true;
+
+			if (APlayerController* PlayerController = GetOwningPlayer())
+			{
+				PlayerController->SetPause(true);  // 게임 일시 정지
+				PlayerController->SetShowMouseCursor(true);  // 마우스 커서 표시
+				FInputModeUIOnly InputMode;
+				InputMode.SetWidgetToFocus(DelayUI->TakeWidget());
+				PlayerController->SetInputMode(InputMode);  // UI 전용 입력 모드 설정
+			}
 		}
 	}
+
+	// 타이머 클리어
 	GetWorld()->GetTimerManager().ClearTimer(WinLoseDelayTimerHandle);
 }
