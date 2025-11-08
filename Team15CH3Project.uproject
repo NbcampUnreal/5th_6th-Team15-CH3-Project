@@ -7,7 +7,14 @@
 		{
 			"Name": "Team15CH3Project",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine",
+				"CommonUI",
+				"DeveloperSettings",
+				"CoreUObject",
+				"AIModule"
+			]
 		}
 	],
 	"Plugins": [
@@ -17,6 +24,10 @@
 			"TargetAllowList": [
 				"Editor"
 			]
+		},
+		{
+			"Name": "CommonUI",
+			"Enabled": true
 		}
 	]
 }
