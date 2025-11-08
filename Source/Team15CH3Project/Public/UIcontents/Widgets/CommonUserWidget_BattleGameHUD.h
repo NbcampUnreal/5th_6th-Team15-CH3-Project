@@ -202,6 +202,8 @@ private:
     UFUNCTION()
     void HandleWinLoseDelay();
 
+    FString QuoteToDisplay;
+
     //승리 또는 패배 UI
     UPROPERTY(EditDefaultsOnly, Category = "UI")
     TSubclassOf<class UUserWidget> WinLoseWidgetClass;
