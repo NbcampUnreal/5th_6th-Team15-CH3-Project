@@ -12,7 +12,7 @@
 
 UAutoAttackComponent::UAutoAttackComponent()
 {
-    PrimaryComponentTick.bCanEverTick = false;
+    PrimaryComponentTick.bCanEverTick = true;
 }
 
 void UAutoAttackComponent::BeginPlay()
