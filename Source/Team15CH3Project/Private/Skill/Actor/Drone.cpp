@@ -12,7 +12,7 @@ ADrone::ADrone()
 
     DroneMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
-    static ConstructorHelpers::FClassFinder<AMonsterBullet> BulletBP(TEXT("/Game/SKill/BluePrint/BP_DroneBullet.BP_DroneBullet"));
+    static ConstructorHelpers::FClassFinder<AMonsterBullet> BulletBP(TEXT("/Game/SKill/BluePrint/BP_DroneBullet.BP_DroneBullet_C"));
     if (BulletBP.Succeeded())
     {
         BulletClass = BulletBP.Class;
